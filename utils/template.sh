@@ -29,4 +29,5 @@ unset __conda_setup
 module --force purge
 conda activate gfn
 
-python run.py "$1" "$SLURM_ARRAY_TASK_ID"
+cd {}
+python run.py "$SLURM_ARRAY_TASK_ID"
