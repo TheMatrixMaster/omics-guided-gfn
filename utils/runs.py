@@ -6,20 +6,24 @@ import os
 import json
 from uuid import uuid4
 from datetime import datetime
-from gflownet.config import Config
-from .helper import EnhancedJSONEncoder, strip_missing
+from .helper import EnhancedJSONEncoder
+from gflownet.config import Config, strip_missing
 
 
-def make_py_script(task, hps, log_dir, seeds=5, CUR_DIR=None):
+def make_py_script(
+    task: str, hps: Config, log_dir: str, run_name: str, seeds=5, CUR_DIR: str = None
+):
     with open(f"{CUR_DIR}/utils/template.py", "r") as f:
         script = f.read()
         f.close()
     hps = strip_missing(hps)
-    script = script.format(CONFIG=hps, LOG_DIR=log_dir, SEEDS=seeds, TASK=task)
+    script = script.format(
+        CONFIG=hps, LOG_DIR=log_dir, SEEDS=seeds, TASK=task, RUN_ID=run_name
+    )
     return script
 
 
-def make_sh_script(run_name: str, log_dir: str, CUR_DIR):
+def make_sh_script(run_name: str, log_dir: str, CUR_DIR: str = None):
     with open(f"{CUR_DIR}/utils/template.sh", "r") as f:
         script = f.read()
         f.close()
@@ -43,7 +47,6 @@ class RunObject:
         from_config: bool = False,
         config_path: str = None,
         LOG_ROOT: str = None,
-        ground_truth: str = None,
     ):
         if from_config:
             with open(f"{config_path}/run_object.json", "r") as f:
@@ -63,7 +66,6 @@ class RunObject:
             self.num_seeds = num_seeds
             self.run_name = run_name if run_name else str(uuid4())
             self.log_dir = self.make_log_dir(LOG_ROOT=LOG_ROOT)
-            self.ground_truth = ground_truth
 
     def make_log_dir(self, LOG_ROOT) -> str:
         cur_date = datetime.today().strftime("%Y-%m-%d")
@@ -76,7 +78,12 @@ class RunObject:
         print(f"Generating scripts for run {self.run_name}...\n")
 
         py_script = make_py_script(
-            self.task, self.cfg, self.log_dir, self.num_seeds, CUR_DIR=CUR_DIR
+            task=self.task,
+            hps=self.cfg,
+            log_dir=self.log_dir,
+            run_name=self.run_name,
+            seeds=self.num_seeds,
+            CUR_DIR=CUR_DIR,
         )
         sh_script = make_sh_script(self.run_name, self.log_dir, CUR_DIR=CUR_DIR)
         sh_cmd = f"sbatch --array=0-{self.num_seeds-1} run.sh"

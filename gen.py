@@ -41,7 +41,10 @@ if __name__ == "__main__":
     # Define Config tree of hyperparameters to test
     # Each field needs to be a List of values to test
     SUPER_HPS = init_empty(Config())
-    # SUPER_HPS.num_workers = [0]
+    SUPER_HPS.replay.use = [True]
+    SUPER_HPS.replay.capacity = [5000]
+    SUPER_HPS.replay.warmup = [500]
+    # SUPER_HPS.num_workers = [8]
     # SUPER_HPS.num_training_steps = [10_000]
     # SUPER_HPS.opt.lr_decay = [10_000]
     # SUPER_HPS.algo.sampling_tau = [0.0]
