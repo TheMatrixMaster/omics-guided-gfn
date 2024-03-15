@@ -9,7 +9,7 @@ from gflownet.algo.config import TBVariant
 from gflownet.config import *
 from utils.runs import RunObject
 
-TASK = "qm9"
+TASK = "toy"
 CUR_DIR = os.path.dirname(os.path.realpath(__file__))
 LOG_ROOT = "/home/mila/s/stephen.lu/scratch/gfn_gene"
 
@@ -21,12 +21,12 @@ BASE_HPS.overwrite_existing_exp = True
 BASE_HPS.num_training_steps = 10_000
 BASE_HPS.validate_every = 0
 BASE_HPS.num_validation_gen_steps = 0
-BASE_HPS.num_workers = 0
-BASE_HPS.opt.lr_decay = 10_000
+BASE_HPS.num_workers = 8
+BASE_HPS.opt.lr_decay = 20_000
 BASE_HPS.cond.temperature.sample_dist = "uniform"
-BASE_HPS.cond.temperature.dist_params = [0.5, 32]
+BASE_HPS.cond.temperature.dist_params = [0.0, 64]
 BASE_HPS.cond.temperature.num_thermometer_dim = 32
-BASE_HPS.algo.sampling_tau = 0.0
+BASE_HPS.algo.sampling_tau = 0.99
 BASE_HPS.algo.method = "TB"
 BASE_HPS.algo.train_random_action_prob = 0.0
 BASE_HPS.algo.tb.variant = TBVariant.TB
@@ -36,7 +36,7 @@ BASE_HPS.task.qm9.model_path = (
 )
 
 if __name__ == "__main__":
-    assert TASK in ["seh", "qm9"], f"Invalid task: {TASK}"
+    assert TASK in ["seh", "qm9", "toy"], f"Invalid task: {TASK}"
 
     # Define Config tree of hyperparameters to test
     # Each field needs to be a List of values to test

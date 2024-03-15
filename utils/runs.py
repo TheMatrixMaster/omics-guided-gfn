@@ -56,9 +56,8 @@ class RunObject:
             assert task in [
                 "seh",
                 "qm9",
-                "bitseq",
-                "rna",
-            ], "Task must be one of 'seh', 'qm9', 'rna' or 'bitseq'."
+                "toy",
+            ], "Task must be one of 'seh', 'qm9', or 'toy'."
             self.cfg = cfg
             self.task = task
             self.num_seeds = num_seeds
