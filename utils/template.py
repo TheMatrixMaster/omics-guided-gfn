@@ -25,9 +25,9 @@ if __name__ == "__main__":
         project="omics-guided-gfn",
         group="gfn-{TASK}-task",
         entity="thematrixmaster",
-        dir=hps.log_dir,
         allow_val_change=True,
         name=f"{RUN_ID}-seed-" + str(seed),
+        mode="online",
     )
 
     if "{TASK}" == "qm9":
@@ -37,7 +37,7 @@ if __name__ == "__main__":
     elif "{TASK}" == "toy":
         trial = ToySimilarityTrainer(hps)
 
-    run.config.update(OmegaConf.to_container(trial.cfg))
+    run.config.update(OmegaConf.to_container(trial.cfg), allow_val_change=True)
 
     trial.print_every = 1
     trial.verbose = True
