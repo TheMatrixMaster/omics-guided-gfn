@@ -7,6 +7,7 @@ from gflownet.config import Config, init_from_dict
 from gflownet.tasks.seh_frag import SEHFragTrainer
 from gflownet.tasks.qm9 import QM9GapTrainer
 from gflownet.tasks.toy_frag import ToySimilarityTrainer
+from gflownet.tasks.morph_frag import MorphSimilarityTrainer
 
 hps = init_from_dict(Config(), {CONFIG})
 
@@ -36,6 +37,8 @@ if __name__ == "__main__":
         trial = SEHFragTrainer(hps)
     elif "{TASK}" == "toy":
         trial = ToySimilarityTrainer(hps)
+    elif "{TASK}" == "morph":
+        trial = MorphSimilarityTrainer(hps)
 
     run.config.update(OmegaConf.to_container(trial.cfg), allow_val_change=True)
 

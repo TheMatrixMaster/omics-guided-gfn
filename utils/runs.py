@@ -60,7 +60,8 @@ class RunObject:
                 "seh",
                 "qm9",
                 "toy",
-            ], "Task must be one of 'seh', 'qm9', or 'toy'."
+                "morph",
+            ], "Task must be one of 'seh', 'qm9', 'morph' or 'toy'."
             self.cfg = cfg
             self.task = task
             self.num_seeds = num_seeds
