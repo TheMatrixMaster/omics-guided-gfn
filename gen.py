@@ -20,27 +20,26 @@ BASE_HPS.print_every = 1
 BASE_HPS.device = "cuda"
 BASE_HPS.pickle_mp_messages = True
 BASE_HPS.overwrite_existing_exp = True
-BASE_HPS.num_training_steps = 5000
-BASE_HPS.validate_every = 1000
+BASE_HPS.num_training_steps = 20000
+BASE_HPS.validate_every = 50
 BASE_HPS.num_final_gen_steps = 1000
-BASE_HPS.num_validation_gen_steps = 0
-# BASE_HPS.num_workers = 8
-BASE_HPS.num_workers = 0
+BASE_HPS.num_validation_gen_steps = 10
+BASE_HPS.num_workers = 8
 BASE_HPS.opt.lr_decay = 20_000
 BASE_HPS.algo.sampling_tau = 0.99
-BASE_HPS.algo.train_random_action_prob = 0.01
+BASE_HPS.algo.train_random_action_prob = 0.05
 BASE_HPS.algo.method = "TB"
 BASE_HPS.algo.tb.variant = TBVariant.TB
 BASE_HPS.algo.tb.Z_learning_rate = 1e-3
 BASE_HPS.algo.tb.Z_lr_decay = 50_000
 
 BASE_HPS.cond.temperature.sample_dist = "constant"
-BASE_HPS.cond.temperature.dist_params = [32.0]
+BASE_HPS.cond.temperature.dist_params = [64.0]
 BASE_HPS.cond.temperature.num_thermometer_dim = 1
 
 # task specific hyperparameters
 BASE_HPS.task.morph_sim.target_path = (
-    "/home/mila/s/stephen.lu/gfn_gene/res/mmc/sample.pkl"
+    "/home/mila/s/stephen.lu/gfn_gene/res/mmc/sample_0.pkl"
 )
 BASE_HPS.task.morph_sim.proxy_path = (
     "/home/mila/s/stephen.lu/gfn_gene/res/mmc/morph_struct.ckpt"
@@ -49,12 +48,17 @@ BASE_HPS.task.morph_sim.config_dir = (
     "/home/mila/s/stephen.lu/gfn_gene/multimodal_contrastive/configs"
 )
 BASE_HPS.task.morph_sim.config_name = "puma_sm_gmc.yaml"
+BASE_HPS.task.morph_sim.reduced_frag = False
+BASE_HPS.task.morph_sim.target_mode = "joint"
 
-# look into different types of temperature conditioning and their parameters (look at constant)
+# Replay buffer configuration
 BASE_HPS.replay.use = False
-BASE_HPS.replay.capacity = 50
-BASE_HPS.replay.warmup = 10
-BASE_HPS.replay.num_from_replay = None
+BASE_HPS.replay.capacity = 100
+BASE_HPS.replay.warmup = 32
+
+BASE_HPS.algo.num_from_policy = 48
+BASE_HPS.replay.num_from_replay = 16
+BASE_HPS.replay.num_new_samples = 16
 
 if __name__ == "__main__":
     assert TASK in ["seh", "qm9", "toy", "morph"], f"Invalid task: {TASK}"
@@ -72,10 +76,11 @@ if __name__ == "__main__":
 
     SUPER_HPS.task.morph_sim.target_path = [
         "/home/mila/s/stephen.lu/gfn_gene/res/mmc/sample_0.pkl",
-        "/home/mila/s/stephen.lu/gfn_gene/res/mmc/sample_1.pkl",
-        "/home/mila/s/stephen.lu/gfn_gene/res/mmc/sample_2.pkl",
-        "/home/mila/s/stephen.lu/gfn_gene/res/mmc/sample_3.pkl",
-        "/home/mila/s/stephen.lu/gfn_gene/res/mmc/sample_4.pkl",
+        "/home/mila/s/stephen.lu/gfn_gene/res/mmc/sample_92.pkl",
+        "/home/mila/s/stephen.lu/gfn_gene/res/mmc/sample_112.pkl",
+        "/home/mila/s/stephen.lu/gfn_gene/res/mmc/sample_1047.pkl",
+        "/home/mila/s/stephen.lu/gfn_gene/res/mmc/sample_1413.pkl",
+        "/home/mila/s/stephen.lu/gfn_gene/res/mmc/sample_1429.pkl",
     ]
 
     cfgs = dfs_config_tree(SUPER_HPS)

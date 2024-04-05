@@ -1,12 +1,12 @@
 #!/bin/bash
-#SBATCH --job-name={}
-#SBATCH --output=slurm_output.txt
-#SBATCH --error=slurm_error.txt
+#SBATCH --job-name=run_trainer
+#SBATCH --output=slurm_output_files/%x_%N_%A_%a.out
 #SBATCH --partition=long
-#SBATCH --time=23:59:59
-#SBATCH --mem=16G
+#SBATCH --time=11:59:00
+#SBATCH --gpus=1
 #SBATCH --cpus-per-task=8
-#SBATCH --gres=gpu:1
+#SBATCH --mem=8GB
+#SBATCH --partition long
 
 # >>> conda initialize >>>
 # !! Contents within this block are managed by 'conda init' !!
@@ -27,5 +27,4 @@ unset __conda_setup
 module --force purge
 conda activate gfn
 
-cd {}
-python run.py "$SLURM_ARRAY_TASK_ID"
+python /home/mila/s/stephen.lu/gfn_gene/gflownet/src/gflownet/tasks/morph_frag.py

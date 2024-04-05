@@ -10,7 +10,7 @@ from gflownet.tasks.morph_frag import MorphSimilarityTrainer
 TIME = time.strftime("%m-%d-%H-%M")
 ENTITY = "thematrixmaster"
 PROJECT = "omics-guided-gfn"
-SWEEP_NAME = f"{TIME}-morphSimilarity-more_nodes&morph_target"
+SWEEP_NAME = f"{TIME}-morph-sim-sweep-final2"
 STORAGE_DIR = f"/home/mila/s/stephen.lu/scratch/gfn_gene/wandb_sweeps/{SWEEP_NAME}"
 
 
@@ -27,26 +27,23 @@ sweep_config = {
         # "config.algo.tb.Z_learning_rate": {"values": [1e-4, 1e-3]},
         # "config.algo.tb.Z_lr_decay": {"values": [2_000, 50_000]},
         # "config.algo.sampling_tau": {"values": [0.0, 0.95, 0.99]},
-        # "config.algo.train_random_action_prob": {"values": [0.0, 0.05, 0.1, 0.2]},
-        # "config.cond.temperature.dist_params": {
-        #     "values": [
-        #         [0, 128.0],
-        #         [0, 64.0],
-        #         [0, 32.0],
-        #     ]
-        # },
+        # "config.algo.train_random_action_prob": {"values": [0.01]},
+        "config.cond.temperature.dist_params": {"values": [[32.0], [64.0]]},
         # "config.replay.capacity": {"values": [5000, 10000]},
         # "config.replay.num_from_replay": {"values": [32, 64]},
         # "config.task.morph_sim.reduced_frag": {"values": [True, False]},
-        # "config.algo.max_nodes": {"values": [9, 10, 11, 12, 13, 14]},
+        "config.algo.max_nodes": {"values": [4, 5, 6, 7, 8]},
         "config.task.morph_sim.target_path": {
             "values": [
                 "/home/mila/s/stephen.lu/gfn_gene/res/mmc/sample_0.pkl",
-                "/home/mila/s/stephen.lu/gfn_gene/res/mmc/sample_92.pkl",
-                "/home/mila/s/stephen.lu/gfn_gene/res/mmc/sample_112.pkl",
-                "/home/mila/s/stephen.lu/gfn_gene/res/mmc/sample_1047.pkl",
+                # "/home/mila/s/stephen.lu/gfn_gene/res/mmc/sample_92.pkl",
+                # "/home/mila/s/stephen.lu/gfn_gene/res/mmc/sample_112.pkl",
+                # "/home/mila/s/stephen.lu/gfn_gene/res/mmc/sample_1047.pkl",
                 "/home/mila/s/stephen.lu/gfn_gene/res/mmc/sample_1413.pkl",
-                "/home/mila/s/stephen.lu/gfn_gene/res/mmc/sample_1429.pkl",
+                # "/home/mila/s/stephen.lu/gfn_gene/res/mmc/sample_1429.pkl",
+                "/home/mila/s/stephen.lu/gfn_gene/res/mmc/sample_3608.pkl",
+                "/home/mila/s/stephen.lu/gfn_gene/res/mmc/sample_16162.pkl",
+                "/home/mila/s/stephen.lu/gfn_gene/res/mmc/sample_15769.pkl",
             ]
         },
     },
@@ -61,9 +58,9 @@ def wandb_config_merger():
     config.device = "cuda"
     config.log_dir = f"{STORAGE_DIR}/{wandb.run.name}-id-{wandb.run.id}"
     config.print_every = 1
-    config.validate_every = 1000
-    config.num_final_gen_steps = 1000
-    config.num_training_steps = 5000
+    config.validate_every = 2000
+    config.num_final_gen_steps = 0
+    config.num_training_steps = 20_000
     config.pickle_mp_messages = True
     config.overwrite_existing_exp = False
     config.opt.learning_rate = 1e-4
@@ -89,14 +86,15 @@ def wandb_config_merger():
         "/home/mila/s/stephen.lu/gfn_gene/res/mmc/sample_0.pkl"
     )
     config.task.morph_sim.proxy_path = (
-        "/home/mila/s/stephen.lu/gfn_gene/res/mmc/morph_struct.ckpt"
+        # "/home/mila/s/stephen.lu/gfn_gene/res/mmc/morph_struct.ckpt"
+        "/home/mila/s/stephen.lu/gfn_gene/res/mmc/morph_struct_90_step_val_loss.ckpt"
     )
     config.task.morph_sim.config_dir = (
         "/home/mila/s/stephen.lu/gfn_gene/multimodal_contrastive/configs"
     )
     config.task.morph_sim.config_name = "puma_sm_gmc.yaml"
     config.task.morph_sim.reduced_frag = False
-    config.task.morph_sim.target_mode = "joint"
+    config.task.morph_sim.target_mode = "morph"
 
     ##  Merge the wandb sweep config with the nested config from gflownet
 
@@ -104,13 +102,13 @@ def wandb_config_merger():
     # config.algo.tb.Z_learning_rate = wandb_config["config.algo.tb.Z_learning_rate"]
     # config.algo.tb.Z_lr_decay = wandb_config["config.algo.tb.Z_lr_decay"]
     # config.algo.sampling_tau = wandb_config["config.algo.sampling_tau"]
-    # config.algo.max_nodes = wandb_config["config.algo.max_nodes"]
+    config.algo.max_nodes = wandb_config["config.algo.max_nodes"]
     # config.algo.train_random_action_prob = wandb_config[
     #     "config.algo.train_random_action_prob"
     # ]
-    # config.cond.temperature.dist_params = wandb_config[
-    #     "config.cond.temperature.dist_params"
-    # ]
+    config.cond.temperature.dist_params = wandb_config[
+        "config.cond.temperature.dist_params"
+    ]
     # config.replay.capacity = wandb_config["config.replay.capacity"]
     # config.replay.num_from_replay = wandb_config["config.replay.num_from_replay"]
 
