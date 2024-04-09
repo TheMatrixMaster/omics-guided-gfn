@@ -10,7 +10,7 @@ from gflownet.tasks.morph_frag import MorphSimilarityTrainer
 TIME = time.strftime("%m-%d-%H-%M")
 ENTITY = "thematrixmaster"
 PROJECT = "omics-guided-gfn"
-SWEEP_NAME = f"{TIME}-morph-sim-sweep-final2"
+SWEEP_NAME = f"{TIME}-morph-sim-factored-targets"
 STORAGE_DIR = f"/home/mila/s/stephen.lu/scratch/gfn_gene/wandb_sweeps/{SWEEP_NAME}"
 
 
@@ -28,22 +28,18 @@ sweep_config = {
         # "config.algo.tb.Z_lr_decay": {"values": [2_000, 50_000]},
         # "config.algo.sampling_tau": {"values": [0.0, 0.95, 0.99]},
         # "config.algo.train_random_action_prob": {"values": [0.01]},
-        "config.cond.temperature.dist_params": {"values": [[32.0], [64.0]]},
+        # "config.cond.temperature.dist_params": {"values": [[32.0], [64.0]]},
         # "config.replay.capacity": {"values": [5000, 10000]},
         # "config.replay.num_from_replay": {"values": [32, 64]},
         # "config.task.morph_sim.reduced_frag": {"values": [True, False]},
-        "config.algo.max_nodes": {"values": [4, 5, 6, 7, 8]},
+        # "config.algo.max_nodes": {"values": [4]},
         "config.task.morph_sim.target_path": {
             "values": [
-                "/home/mila/s/stephen.lu/gfn_gene/res/mmc/sample_0.pkl",
-                # "/home/mila/s/stephen.lu/gfn_gene/res/mmc/sample_92.pkl",
-                # "/home/mila/s/stephen.lu/gfn_gene/res/mmc/sample_112.pkl",
-                # "/home/mila/s/stephen.lu/gfn_gene/res/mmc/sample_1047.pkl",
-                "/home/mila/s/stephen.lu/gfn_gene/res/mmc/sample_1413.pkl",
-                # "/home/mila/s/stephen.lu/gfn_gene/res/mmc/sample_1429.pkl",
-                "/home/mila/s/stephen.lu/gfn_gene/res/mmc/sample_3608.pkl",
-                "/home/mila/s/stephen.lu/gfn_gene/res/mmc/sample_16162.pkl",
-                "/home/mila/s/stephen.lu/gfn_gene/res/mmc/sample_15769.pkl",
+                "/home/mila/s/stephen.lu/gfn_gene/res/mmc/targets/sample_41.pkl",
+                "/home/mila/s/stephen.lu/gfn_gene/res/mmc/targets/sample_92.pkl",
+                "/home/mila/s/stephen.lu/gfn_gene/res/mmc/targets/sample_38.pkl",
+                "/home/mila/s/stephen.lu/gfn_gene/res/mmc/targets/sample_70.pkl",
+                "/home/mila/s/stephen.lu/gfn_gene/res/mmc/targets/sample_76.pkl",
             ]
         },
     },
@@ -83,11 +79,11 @@ def wandb_config_merger():
 
     # task specific hyperparameters
     config.task.morph_sim.target_path = (
-        "/home/mila/s/stephen.lu/gfn_gene/res/mmc/sample_0.pkl"
+        "/home/mila/s/stephen.lu/gfn_gene/res/mmc/targets/sample_41.pkl"
     )
     config.task.morph_sim.proxy_path = (
         # "/home/mila/s/stephen.lu/gfn_gene/res/mmc/morph_struct.ckpt"
-        "/home/mila/s/stephen.lu/gfn_gene/res/mmc/morph_struct_90_step_val_loss.ckpt"
+        "/home/mila/s/stephen.lu/gfn_gene/res/mmc/models/morph_struct_90_step_val_loss.ckpt"
     )
     config.task.morph_sim.config_dir = (
         "/home/mila/s/stephen.lu/gfn_gene/multimodal_contrastive/configs"
@@ -102,19 +98,18 @@ def wandb_config_merger():
     # config.algo.tb.Z_learning_rate = wandb_config["config.algo.tb.Z_learning_rate"]
     # config.algo.tb.Z_lr_decay = wandb_config["config.algo.tb.Z_lr_decay"]
     # config.algo.sampling_tau = wandb_config["config.algo.sampling_tau"]
-    config.algo.max_nodes = wandb_config["config.algo.max_nodes"]
+    # config.algo.max_nodes = wandb_config["config.algo.max_nodes"]
     # config.algo.train_random_action_prob = wandb_config[
     #     "config.algo.train_random_action_prob"
     # ]
-    config.cond.temperature.dist_params = wandb_config[
-        "config.cond.temperature.dist_params"
-    ]
-    # config.replay.capacity = wandb_config["config.replay.capacity"]
-    # config.replay.num_from_replay = wandb_config["config.replay.num_from_replay"]
-
+    # config.cond.temperature.dist_params = wandb_config[
+    #     "config.cond.temperature.dist_params"
+    # ]
     config.task.morph_sim.target_path = wandb_config[
         "config.task.morph_sim.target_path"
     ]
+    # config.replay.capacity = wandb_config["config.replay.capacity"]
+    # config.replay.num_from_replay = wandb_config["config.replay.num_from_replay"]
     # config.task.morph_sim.reduced_frag = wandb_config[
     #     "config.task.morph_sim.reduced_frag"
     # ]
