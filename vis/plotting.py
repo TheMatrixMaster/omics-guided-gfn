@@ -17,7 +17,7 @@ from rdkit import Chem
 from rdkit.Chem import AllChem
 from rdkit.Chem.Fingerprints.FingerprintMols import FingerprintsFromSmiles
 from tqdm import tqdm
-from utils import make_eval_data_loader
+from multimodal_contrastive.analysis.utils import make_eval_data_loader
 from multimodal_contrastive.utils import utils
 from sklearn.metrics.pairwise import cosine_similarity
 
