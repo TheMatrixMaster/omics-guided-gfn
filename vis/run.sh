@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --partition=long
-#SBATCH --cpus-per-task=1
-#SBATCH --mem=8G
-#SBATCH --time=3:00:00
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=32G
+#SBATCH --time=11:59:59
 
 # >>> conda initialize >>>
 # !! Contents within this block are managed by 'conda init' !!
@@ -29,4 +29,4 @@ export CUDA_LAUNCH_BLOCKING=1
 export HYDRA_FULL_ERROR=1
 
 # Start the job
-python /home/mila/s/stephen.lu/gfn_gene/multimodal_contrastive/multimodal_contrastive/analysis/plotting.py
+python /home/mila/s/stephen.lu/gfn_gene/vis/save_fingerprints.py

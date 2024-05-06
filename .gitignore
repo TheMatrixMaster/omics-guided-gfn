@@ -1,4 +1,6 @@
 # Local
+/sweeps
+/gneprop
 /res
 /tmp
 /sweeps/slurm_output_files

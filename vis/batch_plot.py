@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pandas as pd
 import hydra
@@ -11,8 +12,9 @@ from pytorch_lightning import (
 )
 
 import umap
-
+import sqlite3
 from tqdm import tqdm
+from collections import defaultdict
 from itertools import combinations
 from sklearn.decomposition import PCA
 from sklearn.metrics.pairwise import cosine_similarity
@@ -20,6 +22,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from rdkit import Chem
 from rdkit.Chem import AllChem
 from rdkit.DataStructs.cDataStructs import ExplicitBitVect
+from rdkit.Chem.Scaffolds.MurckoScaffold import MakeScaffoldGeneric
 from rdkit.Chem.Fingerprints.FingerprintMols import FingerprintsFromSmiles
 
 from multimodal_contrastive.utils import utils
@@ -28,7 +31,7 @@ from multimodal_contrastive.data.dataset import TestDataset
 from multimodal_contrastive.analysis.utils import make_eval_data_loader
 
 import torch_geometric.data as gd
-from gflownet.models.mmc import mol2graph
+from gflownet.models.mmc import mol2graph, to_device
 
 # register custom resolvers if not already registered
 OmegaConf.register_new_resolver("sum", lambda input_list: np.sum(input_list), replace=True)
@@ -39,10 +42,6 @@ device
 sqlite_cols = (
     ["smi", "r"] + [f"{a}_{i}" for a in ["fr"] for i in range(1)] + ["ci_beta"]
 )
-
-import sqlite3
-from collections import defaultdict
-from tqdm import tqdm
 
 
 def get_bulk_fingerprints(smis):
@@ -113,16 +112,23 @@ def plot_reward_hist(rewards, filename="reward-hist.png"):
     plt.savefig(filename)
     plt.clf()
 
-def plot_umap(fps, target_fp, rews, k=200, sim_threshold=0.7, filename="umap-fps.png"):
+def plot_umap(fps, target_fp, rews, k=200, sim_threshold=0.7, save_dir="results", filename="umap-fps.png"):
     # Plot umap of molecular fingerprints of top-k highest reward molecules per method
-    n_neighbors = [20, 30, 40, 50, 60]
+    n_neighbors = [5, 10, 20, 30, 40]
+    new_fps, new_rews = {}, {}
     all_fps = []
     for model_name, fp in fps.items():
+        new_fps[model_name] = fp
+        new_rews[model_name] = rews[model_name]
         if model_name == "Target": continue
         elif model_name == "PUMA":
             # randomly sample 10*k molecules from the dataset
-            # top_k_idx = np.random.choice(len(fp), min(10*k, len(fp)), replace=False)
-            top_k_idx = np.argsort(rews[model_name])[::-1][:10*k]
+            top_k_idx_rnd = np.random.choice(len(fp), min(5*k, len(fp)), replace=False)
+            top_k_idx_top = get_top_k_dissimilar_modes(
+                fp, target_fp, rews[model_name],
+                sim_threshold=sim_threshold, k=5*k
+            )
+            top_k_idx = list(set(top_k_idx_rnd).union(set(top_k_idx_top)))
         else:
             # get top-k most dissimilar molecules with highest reward (modes)
             top_k_idx = get_top_k_dissimilar_modes(
@@ -130,20 +136,20 @@ def plot_umap(fps, target_fp, rews, k=200, sim_threshold=0.7, filename="umap-fps
                 sim_threshold=sim_threshold, k=k
             )
             print(f"Found {len(top_k_idx)} modes for {model_name}")
-        fps[model_name] = [fp[i] for i in top_k_idx]
-        rews[model_name] = [rews[model_name][i] for i in top_k_idx]
-        all_fps.extend(fps[model_name])
+        new_fps[model_name] = [fp[i] for i in top_k_idx]
+        new_rews[model_name] = [rews[model_name][i] for i in top_k_idx]
+        all_fps.extend(new_fps[model_name])
 
     for n_neigh in n_neighbors:
         print(f"Running umap with {n_neigh} neighbors")
         reducer = umap.UMAP(n_neighbors=n_neigh, random_state=42, verbose=True, min_dist=0.1, metric="jaccard")
         reducer = reducer.fit(all_fps)
 
-        for model_name, fp in fps.items():
+        for model_name, fp in new_fps.items():
             if len(fp) == 0: continue
             fp_reduced = reducer.transform(fp)
             s = 2
-            a = [r**8 for r in rews[model_name]]
+            a = [r**8 for r in new_rews[model_name]]
             if model_name == "Target":
                 s = 25
                 a = 1
@@ -154,20 +160,65 @@ def plot_umap(fps, target_fp, rews, k=200, sim_threshold=0.7, filename="umap-fps
         plt.title("UMAP of molecular fps")
         plt.xlabel("umap1")
         plt.ylabel("umap2")
-        plt.savefig(f"results/{n_neigh}n_{filename}")
+        plt.savefig(f"{save_dir}/{n_neigh}n_{filename}")
         plt.clf()
 
-def plot_assay_logit_hist(smis, rews, model, active_cols, k=500, filename="assay-logit-hist.png"):
-    # Plots a histogram of the logit distribution of top-k highest reward molecules from each method
-    active_cols = torch.tensor(active_cols) if isinstance(active_cols, list) else active_cols
+def plot_assay_logit_top_k(smis, model, active_cols, k=100, filename="assay-logit-top-k.png"):
+    # Plots a histogram of the top-k highest logit values among all molecules sampled by each method
+    # This doesn't really tell us exactly what we want since it could be that low reward molecules that
+    # were randomly sampled somehow end up having high logit values. However, I'm gonna use this
+    # as a sanity check to see if somehow gfn samples do better in the extremum, than random and dataset samples
+    active_cols = active_cols.tolist() if isinstance(active_cols, torch.Tensor) else active_cols
     fig, ax = plt.subplots(1, len(active_cols), figsize=(5*len(active_cols), 5), squeeze=False)
 
     for model_name, smi in smis.items():
         if len(smi) < k or model_name in ["Target"]:
             continue
+        # create a test dataset using the smiles and run inference with assay model
+        full_df = pd.DataFrame(smi, columns=["smiles"])
+        dataset = TestDataset(full_df, mol_col="smiles", label_col=None)
+        dataloader = make_eval_data_loader(dataset, batch_size=128)
+        y_hat = []
+        for batch in tqdm(dataloader):
+            y_hat.append(model(batch)[0].detach().cpu().numpy())
+        y_hat = np.vstack(y_hat)
+        logit_values = y_hat[:, active_cols]
+        # for each active column, we produce a separate hist plot of the logit values
+        for i, col in enumerate(active_cols):
+            # keep the top-k highest logit values in the current active column
+            values = np.sort(logit_values[:, i])[::-1][:k]
+            print(np.max(values), np.min(values))
+            ax[0,i].hist(values, bins=50, label=model_name, alpha=0.4, density=True)
+    
+    for i, col in enumerate(active_cols):
+        ax[0,i].legend()
+        ax[0,i].set_xlabel("Logit Value")
+        ax[0,i].set_ylabel("Density")
+        ax[0,i].set_title(f"Top-k Logit Values for assay {col}")
 
-        # choose the top-k smi with highest rew
-        top_k_idx = np.argsort(rews[model_name])[::-1][:k]
+    plt.savefig(filename)
+    plt.clf()
+
+def plot_assay_logit_hist(smis, fps, target_fp, rews, model, active_cols, k=500, sim_threshold=0.7, filename="assay-logit-hist.png"):
+    # Plots a histogram of the logit distribution of top-k highest reward molecules from each method
+    active_cols = torch.tensor(active_cols) if isinstance(active_cols, list) else active_cols
+    fig, ax = plt.subplots(1, len(active_cols), figsize=(5*len(active_cols), 5), squeeze=False)
+    
+    for model_name, smi in smis.items():
+        if len(smi) < k or model_name in ["Target"]:
+            continue
+
+        if model_name == "PUMA":
+            # choose the top-k smi with highest rew
+            top_k_idx = np.argsort(rews[model_name])[::-1][:k]
+        else:
+            # get top-k most dissimilar molecules with highest reward (modes)
+            # top_k_idx = np.argsort(rews[model_name])[::-1][:k]
+            top_k_idx = get_top_k_dissimilar_modes(
+                fps[model_name], target_fp, rews[model_name],
+                sim_threshold=sim_threshold, k=k
+            )
+        # get the top-k smiles
         top_k_smi = [smi[i] for i in top_k_idx]
         
         # create a test dataset using the smiles and run inference with assay model
@@ -191,7 +242,6 @@ def plot_assay_logit_hist(smis, rews, model, active_cols, k=500, filename="assay
     plt.savefig(filename)
     plt.clf()
 
-
 def setup_puma():
     # Load config for MMC model
     config_name = "puma_sm_gmc"
@@ -214,16 +264,28 @@ def load_assay_pred_model():
     model.eval()
     return model
 
+def load_cluster_pred_model():
+    ckpt = '/home/mila/s/stephen.lu/gfn_gene/res/mmc/models/puma_cluster_epoch=52.ckpt'
+    model = MultiTask_FP_PL.load_from_checkpoint(ckpt, map_location=device)
+    model.eval()
+    return model
+
 def get_active_assay_cols(dataset, smi):
     # returns the column indices of the active assays == 1 for a given target smile
     if smi not in dataset.ids: return None
     target_idx = np.where(np.array(dataset.ids)==smi)[0][0]
-    return torch.where(dataset.y[target_idx] == 1)[0]
+    active_cols = torch.where(dataset.y[target_idx] == 1)[0]
+    if len(active_cols) == 0: return None
+    return active_cols
 
 def load_assay_matrix_from_csv():
     data_dir = '/home/mila/s/stephen.lu/scratch/mmc/datasets/'
     dataset = TestDataset(data_dir + 'assay_matrix_discrete_37_assays_canonical.csv')
     return dataset
+
+def load_cluster_labels_from_csv():
+    data_dir = '/home/mila/s/stephen.lu/scratch/mmc/datasets/'
+    return pd.read_csv(data_dir + 'cluster_matrix.csv', index_col=1)
 
 def load_mmc_model(cfg):
     # Load model from checkpoint
@@ -243,7 +305,6 @@ def inference_puma(datamodule, cfg):
     )
     return representations
 
-
 def get_representations():
     data_dir = "/home/mila/s/stephen.lu/gfn_gene/res/mmc/data"
     try:
@@ -254,24 +315,20 @@ def get_representations():
         np.savez(f"{data_dir}/puma_embeddings.npz", **res)
     return res
 
-
 def get_fp_from_base64(base64_fp):
     fp_from_base64 = ExplicitBitVect(2048)
     fp_from_base64.FromBase64(base64_fp)
     return fp_from_base64
-
 
 def get_fp_from_bit_array(bit_array):
     fp = ExplicitBitVect(2048)
     fp.SetBitsFromList((np.where(bit_array)[0].tolist()))
     return fp
 
-
 def get_fp_from_base64_or_bit_array(fp):
     if isinstance(fp, str):
         return get_fp_from_base64(fp)
     return get_fp_from_bit_array(fp)
-
 
 def get_fingerprints(fpgen):
     data_dir = "/home/mila/s/stephen.lu/gfn_gene/res/mmc/data"
@@ -287,7 +344,6 @@ def get_fingerprints(fpgen):
             fp = fpgen.GetFingerprint(mol)
             res.append(fp)
     return res
-
 
 def sqlite_load(root, columns, num_workers=8, upto=None, begin=0):
     try:
@@ -315,7 +371,6 @@ def sqlite_load(root, columns, num_workers=8, upto=None, begin=0):
         return values
     finally:
         bar.close()
-
 
 def is_new_mode(modes_fp, new_fp, sim_threshold=0.7):
     """Returns True if obj is a new mode, False otherwise"""
@@ -347,13 +402,11 @@ def get_top_k_dissimilar_modes(fps, target_fp, rews, sim_threshold=0.7, k=100):
             modes_idx.append(sorted_idx[i])
     return modes_idx
 
-
-def get_data_from_run(base_dir, run_id, target_fp):
+def get_data_from_run(base_dir, run_id, target_fp=None):
     # Obtain sampled data from the run
     run_dir = f"{base_dir}/{run_id}"
     values = sqlite_load(f"{run_dir}/train/", sqlite_cols, 1)
     smis, rewards = values['smi'][0], values['fr_0'][0]
-    high = 0
 
     try:
         filtered_fps = np.load(f"{run_dir}/fps.npy", allow_pickle=True)
@@ -362,19 +415,17 @@ def get_data_from_run(base_dir, run_id, target_fp):
     except FileNotFoundError:
         raise FileNotFoundError(f"Filtered fps not found for {model_name}")
 
-    for idx, (smi, r) in tqdm(enumerate(zip(smis, rewards))):
-        fp = filtered_fps[idx]
-        tanimoto_sim = AllChem.DataStructs.TanimotoSimilarity(target_fp, fp)
-        if tanimoto_sim > high:
-            high = tanimoto_sim
-            print(high, r)
-        filtered_fps.append(fp)
+    if target_fp is None:
+        return filtered_fps, rewards, smis
+
+    # Just log the max tanimoto sim
+    tan_sims = AllChem.DataStructs.BulkTanimotoSimilarity(target_fp, filtered_fps)
+    print("Max Tanimoto Similarity to Target: ", max(tan_sims))
     
     return filtered_fps, rewards, smis
 
-
 def get_data_for_baseline_run(base_dir, run_id, target_latent, cfg):
-    filtered_fps, _, smis = get_data_from_run(base_dir, run_id, target_fp)
+    filtered_fps, _, smis = get_data_from_run(base_dir, run_id, None)
     # now we need to recompute latents for these random samples and obtain their rewards
     # first, I don't wanna run inference on 640000 samples, so let's randomly take a subset
     rnd_idx = np.random.choice(len(smis), 10000, replace=False)
@@ -392,33 +443,31 @@ def get_data_for_baseline_run(base_dir, run_id, target_latent, cfg):
 
 
 if __name__ == "__main__":
-    base_dir = "/home/mila/s/stephen.lu/scratch/gfn_gene/wandb_sweeps"
     sim_threshold = 0.2
-    
+    base_dir = "/home/mila/s/stephen.lu/scratch/gfn_gene/wandb_sweeps"
     models = {
+        # Assay Based
         "6888": "04-24-01-46-morph-sim-final-targets/amber-sweep-7-id-dxn50jrg",
         "2288": "04-24-01-46-morph-sim-final-targets/dandy-sweep-5-id-ongkpkty",
-        "338": "04-24-01-46-morph-sim-final-targets/logical-sweep-2-id-kl0ygljq",
-        "4331": "04-24-01-46-morph-sim-final-targets/pleasant-sweep-6-id-w9d4thq9",
-        "8949": "04-25-08-32-morph-sim-run-failed-8949/true-sweep-1-id-xodl84ba",
+        "10075": "04-24-01-49-morph-sim-final-targets/fiery-sweep-15-id-3fj60c6m",
         "903": "04-24-01-46-morph-sim-final-targets/snowy-sweep-3-id-in1e3736",
         "1847": "04-24-01-46-morph-sim-final-targets/splendid-sweep-4-id-o4l26cxc",
         "8838": "04-24-01-46-morph-sim-final-targets/stilted-sweep-9-id-e0h282g0",
-        "9277": "04-24-01-46-morph-sim-final-targets/sunny-sweep-11-id-66qel5x0",
-        "8206": "04-24-01-46-morph-sim-final-targets/sweet-sweep-8-id-fr5fx186",
-        "39": "04-24-01-46-morph-sim-final-targets/young-sweep-1-id-6ifys7pm",
-        "9476": "04-24-01-49-morph-sim-final-targets/astral-sweep-14-id-pih6w90m",
         "13905": "04-24-01-49-morph-sim-final-targets/azure-sweep-17-id-fgtpgfuz",
-        "12071": "04-24-01-49-morph-sim-final-targets/deep-sweep-16-id-lij3uk3z",
-        "9445": "04-24-01-49-morph-sim-final-targets/ethereal-sweep-13-id-fcbo3yhr",
-        "10075": "04-24-01-49-morph-sim-final-targets/fiery-sweep-15-id-3fj60c6m",
-        "9300": "04-24-01-49-morph-sim-final-targets/twilight-sweep-12-id-laveyrao",
+        "39": "04-24-01-46-morph-sim-final-targets/young-sweep-1-id-6ifys7pm",
+        # Cluster Based
+        # "338": "04-24-01-46-morph-sim-final-targets/logical-sweep-2-id-kl0ygljq",
+        # "4331": "04-24-01-46-morph-sim-final-targets/pleasant-sweep-6-id-w9d4thq9",
+        # "8949": "04-25-08-32-morph-sim-run-failed-8949/true-sweep-1-id-xodl84ba",
+        # "9277": "04-24-01-46-morph-sim-final-targets/sunny-sweep-11-id-66qel5x0",
+        # "8206": "04-24-01-46-morph-sim-final-targets/sweet-sweep-8-id-fr5fx186",
+        # "9476": "04-24-01-49-morph-sim-final-targets/astral-sweep-14-id-pih6w90m",
+        # "12071": "04-24-01-49-morph-sim-final-targets/deep-sweep-16-id-lij3uk3z",
+        # "9445": "04-24-01-49-morph-sim-final-targets/ethereal-sweep-13-id-fcbo3yhr",
+        # "9300": "04-24-01-49-morph-sim-final-targets/twilight-sweep-12-id-laveyrao",
     }
 
-    fpgen = AllChem.GetRDKitFPGenerator(
-        maxPath=7,
-        branchedPaths=False,
-    )
+    fpgen = AllChem.GetRDKitFPGenerator(maxPath=7, branchedPaths=False)
 
     # Obtain representations and fingerprints for puma dataset
     datamodule, _ = setup_puma()
@@ -427,6 +476,13 @@ if __name__ == "__main__":
     dataset_smis = [x["inputs"]["struct"].mols for x in datamodule.dataset]
     assay_dataset = load_assay_matrix_from_csv()
     assay_model = load_assay_pred_model()
+
+    # Obtain fingerprints and smis for random sampling model
+    random_fps, _, random_smis = get_data_from_run(
+        base_dir,
+        "04-12-03-58-morph-sim-target-67-algo/swift-sweep-4-id-08lkh6fe", None
+    )
+    random_rewards = np.zeros(len(random_fps))  # We use random dummy rewards for now
 
     for model_name, run_id in models.items():
         print(f"Running for model: ", model_name)
@@ -456,14 +512,24 @@ if __name__ == "__main__":
         smiles[model_name] = smis
 
         print("Finished processing for model: ", model_name)
-    
-        if target_active_assay_cols is not None:
-            plot_assay_logit_hist(smiles, rews, assay_model, target_active_assay_cols, k=500, filename=f"results/assay-logit-hist_{target_idx}.png")
+
+        save_dir = f"results/{target_idx}"
+        if not os.path.isdir(save_dir):
+            os.makedirs(save_dir)
         
-        plot_reward_hist(rews, f"results/reward-hist-target_{target_idx}.png")
-        plot_pairwise_sim_hist(fps, rews, k=50, filename=f"results/tanimoto-sim-betw-samples_{target_idx}.png")
-        plot_sim_to_target_hist(fps, target_fp, rews, k=200, by="similarity", filename=f"results/tan-sim-to-target_{target_idx}_by_sim.png")
-        plot_sim_to_target_hist(fps, target_fp, rews, k=200, by="reward", filename=f"results/tan-sim-to-target_{target_idx}_by_rew.png")
-        plot_umap(fps, target_fp, rews, k=200, sim_threshold=sim_threshold, filename=f"umap_top_200_<{sim_threshold}_target_{target_idx}.png")
+        # plot_reward_hist(rews, f"{save_dir}/reward-hist-target_{target_idx}.png")
+        # plot_pairwise_sim_hist(fps, rews, k=50, filename=f"{save_dir}/tanimoto-sim-betw-samples_{target_idx}.png")
+        # plot_umap(fps, target_fp, rews, k=200, sim_threshold=sim_threshold, save_dir=save_dir, filename=f"umap_top_200_<{sim_threshold}_target_{target_idx}.png")
+
+        # fps["RND"] = random_fps
+        # rews["RND"] = random_rewards
+        # smiles["RND"] = random_smis
+
+        # plot_sim_to_target_hist(fps, target_fp, rews, k=200, by="similarity", filename=f"{save_dir}/tan-sim-to-target_{target_idx}_by_sim.png")
+        # plot_sim_to_target_hist(fps, target_fp, rews, k=200, by="reward", filename=f"{save_dir}/tan-sim-to-target_{target_idx}_by_rew.png")
+        
+        if target_active_assay_cols is not None and len(target_active_assay_cols) > 0:
+            plot_assay_logit_hist(smiles, fps, target_fp, rews, assay_model, target_active_assay_cols, k=500, sim_threshold=sim_threshold, filename=f"{save_dir}/assay-logit-hist_{target_idx}.png")
+            # plot_assay_logit_top_k(smiles, assay_model, target_active_assay_cols, k=500, filename=f"{save_dir}/assay-logit-top-k_{target_idx}.png")
 
         print("Finished plotting for model: ", model_name)
