@@ -1,469 +1,342 @@
-import numpy as np
-import pandas as pd
-import hydra
-import torch
-import matplotlib.pyplot as plt
-from omegaconf import OmegaConf
-
-from pytorch_lightning import (
-    LightningDataModule,
-    seed_everything,
-)
-
+"""
+Script to perform actual plotting
+"""
+from utils import *
 import umap
+import seaborn as sns
+import matplotlib.pyplot as plt
+from matplotlib.colors import LinearSegmentedColormap, Normalize
 
-from tqdm import tqdm
-from itertools import combinations
-from sklearn.decomposition import PCA
-from sklearn.metrics.pairwise import cosine_similarity
-
-from rdkit import Chem
-from rdkit.Chem import AllChem
-from rdkit.DataStructs.cDataStructs import ExplicitBitVect
-from rdkit.Chem.Fingerprints.FingerprintMols import FingerprintsFromSmiles
-
-from multimodal_contrastive.utils import utils
-from multimodal_contrastive.networks.models import MultiTask_FP_PL
-from multimodal_contrastive.data.dataset import TestDataset
-from multimodal_contrastive.analysis.utils import make_eval_data_loader
-
-import torch_geometric.data as gd
-from gflownet.models.mmc import mol2graph
-
-# register custom resolvers if not already registered
-OmegaConf.register_new_resolver("sum", lambda input_list: np.sum(input_list), replace=True)
-
-device = "cuda" if torch.cuda.is_available() else "cpu"
-device
-
-sqlite_cols = (
-    ["smi", "r"] + [f"{a}_{i}" for a in ["fr"] for i in range(1)] + ["ci_beta"]
-)
-
-import sqlite3
-from collections import defaultdict
-from tqdm import tqdm
-
-
-def get_bulk_fingerprints(smis):
-    filtered_fps = FingerprintsFromSmiles(
-        dataSource=[{'id': idx, 'smi': s} for idx, s in enumerate(smis)],
-        idCol='id',
-        smiCol='smi',
-        fingerprinter=Chem.RDKFingerprint,
-        reportFreq=10000,
-    )
-    filtered_fps = [x[1] for x in filtered_fps]
-    return filtered_fps
-
-
-def plot_sim_to_target_hist(fps, target_fp, rews, k=100, by="similarity", filename="tanimoto-sim-to-target.png"):
-    # Plots the tanimoto similarity of the top-k most similar sampled molecules 
-    # for each method or top-k highest by reward
-    for model_name, fp in fps.items():
-        if len(fp) == 0 or model_name == "Target":
-            continue
-        tan_sim_to_target = AllChem.DataStructs.BulkTanimotoSimilarity(target_fp, fp)
-        if by == "similarity":
-            top_k_idx = np.argsort(tan_sim_to_target)[::-1][:k]
-        else:
-            top_k_idx = np.argsort(rews[model_name])[::-1][:k]
-        tan_sim_to_target = [tan_sim_to_target[i] for i in top_k_idx]
-        plt.hist(tan_sim_to_target, bins=50, label=model_name, alpha=0.4, density=True)
-
+def plot_modes_over_trajs(runs_datum, rew_thresh=0.9, sim_thresh=0.7, bs=64, ignore=[], save_path=None):
+    fig, ax = plt.subplots(1, 2, figsize=(20, 10))
+    maxbs = bs if type(bs) == int else max(bs.values())
+    for run_name, run_datum in runs_datum.items():
+        if run_name in ignore: continue
+        if type(bs) == int: bsl = bs
+        else: bsl = bs[run_name]
+        num_modes, avg_rew = num_modes_lazy(run_datum, rew_thresh, sim_thresh, bsl)
+        sns.lineplot(x=np.arange(len(num_modes)), y=num_modes, ax=ax[0], label=run_name)
+        sns.lineplot(x=np.arange(len(avg_rew)), y=avg_rew, ax=ax[1], label=run_name)
+    ax[0].set_title(f"Number of modes found w/ reward >= {rew_thresh} & Tanimoto sim <= {sim_thresh}")
+    ax[0].set_xlabel(f"Num Trajectories (x{maxbs})")
+    ax[0].set_ylabel("Num Modes")
+    ax[1].set_title(f"Average reward")
+    ax[1].set_xlabel(f"Num Trajectories (x{maxbs})")
+    ax[1].set_ylabel("Average Reward")
     plt.legend()
-    plt.title(f"Tanimoto Similarity to Target (Top-k highest by {by})")
-    plt.xlabel("Tanimoto Similarity")
-    plt.ylabel("Density")
-    plt.savefig(filename)
-    plt.clf()
+    plt.savefig(save_path if save_path else f"num_modes_{rew_thresh}_{sim_thresh}.png")
 
-def plot_pairwise_sim_hist(fps, rews, k=50, filename="tanimoto-sim-between-samples.png"):
-    for model_name, fp in fps.items():
-        if len(fp) < k or model_name in ["Target", "PUMA"]:
-            continue
+def plot_tsim_between_modes_and_to_target(runs_datum, k1=10000, k2=1000, bins=50, ignore=[], save_path="tanimoto_sim_hist.png"):
+    fig, ax = plt.subplots(1, 2, figsize=(20, 10))
+    df1, df2 = pd.DataFrame(), pd.DataFrame()
+    for run_name, run_datum in runs_datum.items():
+        if run_name in ignore: continue
+        top_k1_tsim_to_target = run_datum['top_k_reward_tsim_to_target'][:k1]
+        top_k2_fps = run_datum['top_k_reward_fps'][:k2]
+        tani_sim_between_modes = []
+        for i in tqdm(range(len(top_k2_fps))):
+            tani_sim_between_modes.extend(AllChem.DataStructs.BulkTanimotoSimilarity(top_k2_fps[i], top_k2_fps[i+1:]))
+        df1 = pd.concat([df1, pd.DataFrame({ "method": [run_name] * len(top_k1_tsim_to_target), "value": top_k1_tsim_to_target })], ignore_index=True)
+        df2 = pd.concat([df2, pd.DataFrame({ "method": [run_name] * len(tani_sim_between_modes), "value": tani_sim_between_modes })], ignore_index=True)
+    sns.histplot(data=df1, x="value", hue="method", bins=bins, ax=ax[0], stat="density", common_norm=False, alpha=0.5)
+    sns.histplot(data=df2, x="value", hue="method", bins=bins, ax=ax[1], stat="density", common_norm=False, alpha=0.5)
+    ax[0].set_title(f"Tanimoto Similarity to Target of Top-{k1} Samples by Reward")
+    ax[0].set_xlabel("Tanimoto Similarity")
+    ax[1].set_title(f"Tanimoto Similarity between Top-{k2} Samples by Reward")
+    ax[1].set_xlabel("Tanimoto Similarity")
+    ax[0].set_yscale('log', base=10)
+    plt.savefig(save_path)
 
-        # choose the top-k fps with highest rew
-        top_k_idx = np.argsort(rews[model_name])[::-1][:k]
-        top_k_fps = [fp[i] for i in top_k_idx]
-        
-        tanimoto_sim = []
-        for i, j in combinations(top_k_fps, 2):
-            tanimoto_sim.append(AllChem.DataStructs.TanimotoSimilarity(i, j))
+def plot_tsim_and_reward_full_hist(runs_datum, bins=50, rew_key="rewards", sim_key="tsim_to_target", 
+                                   ignore=[], save_path="tsim_and_reward_hist.png"):
+    fig, ax = plt.subplots(1, 2, figsize=(20, 10))
+    df = pd.DataFrame()
+    for run_name, run_datum in runs_datum.items():
+        if run_name in ignore: continue
+        df = pd.concat([df, pd.DataFrame({
+            "method": [run_name] * len(run_datum[rew_key]),
+            "rew": run_datum[rew_key],
+            "sim": run_datum[sim_key]
+        })], ignore_index=True)
+    sns.histplot(data=df, x="sim", hue="method", bins=bins, ax=ax[0], stat='density', common_norm=False)
+    sns.histplot(data=df, x="rew", hue="method", bins=bins, ax=ax[1], stat='density', common_norm=False)
+    ax[0].set_title("Tanimoto Similarity to Target of all Samples")
+    ax[1].set_title("Gflownet Rewards of all Samples")
+    ax[0].set_xlabel("Tanimoto Similarity")
+    ax[1].set_xlabel("Reward")
+    ax[0].set_yscale('log')
+    ax[1].set_yscale('log')
+    plt.savefig(save_path)
 
-        plt.hist(tanimoto_sim, bins=50, label=model_name, alpha=0.4, density=True)
+def plot_pooled_boxplot_sim_and_rew(runs_datum, nbins1=15, nbins2=15, nsamples1=1000, nsamples2=1000, ignore=[], save_path="pooled_boxplot_sim_rew.png"):
+    pooled_datum = pool_datum(runs_datum, avoid_keys=ignore)
+    binned_datum_by_reward, rew_bins, rew_empty_bins, sper_rew_bin = bin_datum_by_col("rewards", 
+        pooled_datum, nbins1, return_bins=True, samples_per_method=nsamples1,
+        toss_bins_with_less_methods=True, subset=["rewards", "tsim_to_target"])
+    binned_datum_by_tan_sim, sim_bins, sim_empty_bins, sper_sim_bin = bin_datum_by_col("tsim_to_target",
+        pooled_datum, nbins2, return_bins=True, samples_per_method=nsamples2,
+        toss_bins_with_less_methods=True, subset=["rewards", "tsim_to_target"])
+    fig, ax = plt.subplots(1, 2, figsize=(20, 10))
+    global_df_by_rew = pd.DataFrame()
+    global_df_by_sim = pd.DataFrame()
+    for run_name, run_datum in binned_datum_by_reward.items():
+        dfs = [pd.DataFrame({**{'Bin': bin}, **subdict}) for bin, subdict in run_datum.items()]
+        if len(dfs) == 0: continue
+        df = pd.concat(dfs, ignore_index=True)
+        global_df_by_rew = pd.concat([global_df_by_rew, df], ignore_index=True)
+    rew_bins_ne = [i for i in range(1, len(rew_bins)+1) if i not in rew_empty_bins]
+    global_df_by_rew = global_df_by_rew[global_df_by_rew['Bin'].isin(rew_bins_ne)]
+    rew_bin_labels = [f"{rew_bins[i]:.2f}-{rew_bins[i+1]:.2f}\n({sper_rew_bin[i]})"
+                        for i in range(len(rew_bins)-1)] + [f"{rew_bins[-1]:.2f}-1.0\n({sper_rew_bin[-1]})"]
+    sns.boxplot(x="Bin", y="tsim_to_target", data=global_df_by_rew, ax=ax[0],\
+                formatter=lambda x: rew_bin_labels[int(x)-1], gap=.1)
+    for run_name, run_datum in binned_datum_by_tan_sim.items():
+        if run_name in ignore: continue
+        dfs = [pd.DataFrame({**{'Bin': bin}, **subdict}) for bin, subdict in run_datum.items()]
+        if len(dfs) == 0: continue
+        df = pd.concat(dfs, ignore_index=True)
+        global_df_by_sim = pd.concat([global_df_by_sim, df], ignore_index=True)
+    sim_bins_ne = [i for i in range(1, len(sim_bins)+1) if i not in sim_empty_bins]
+    global_df_by_sim = global_df_by_sim[global_df_by_sim['Bin'].isin(sim_bins_ne)]
+    sim_bin_labels = [f"{sim_bins[i]:.2f}-{sim_bins[i+1]:.2f}\n({sper_sim_bin[i]})"
+                        for i in range(len(sim_bins)-1)] + [f"{sim_bins[-1]:.2f}-1.0\n({sper_sim_bin[-1]})"]
+    sns.boxplot(x="Bin", y="rewards", data=global_df_by_sim, ax=ax[1],\
+                formatter=lambda x: sim_bin_labels[int(x)-1], gap=.1)
+    ax[0].set_title("Tanimoto Similarity to Target by Reward Bins")
+    ax[0].set_xlabel("Reward Bin")
+    ax[0].set_ylabel("Tanimoto Similarity")
+    ax[0].xaxis.set_tick_params(rotation=45)
+    ax[1].set_title("Reward by Tanimoto Similarity to Target Bins")
+    ax[1].set_xlabel("Tanimoto Similarity Bin")
+    ax[1].set_ylabel("Reward")
+    ax[1].xaxis.set_tick_params(rotation=45)
+    plt.savefig(save_path)
 
-    plt.legend()
-    plt.title("Pairwise Tanimoto Similarity")
-    plt.xlabel("Tanimoto Similarity")
-    plt.ylabel("Density")
-    plt.savefig(filename)
-    plt.clf()
+def get_preds_for_bin(subdict, assay_model, assay_cols, cluster_model, cluster_id, use_gneprop=False):
+    assert "smis" in subdict.keys()
+    subdict["assay_preds"] = predict_assay_logits_from_smi(None, subdict["smis"], assay_model,
+                                assay_cols, save_preds=False, verbose=False)
+    subdict["cluster_preds"] = predict_cluster_logits_from_smi(None, subdict["smis"], cluster_model,
+                                cluster_id, save_preds=False, use_gneprop=use_gneprop, verbose=False)
+    return subdict
 
-def plot_reward_hist(rewards, filename="reward-hist.png"):
-    for model_name, rew in rewards.items():
-        if len(rew) == 0 or model_name == "Target":
-            continue
-        plt.hist(rew, bins=50, label=model_name, alpha=0.4, density=True)
+def plot_unpooled_boxplot_sim_and_rew(runs_datum, bins1=10, bins2=10, n1=2000, n2=1000, ignore=[],
+                                 save_path="unpooled_boxplot_sim_rew.png"):
+    binned_datum_by_reward, rew_bins, rew_empty_bins, sper_rew_bin = bin_datum_by_col(
+        "rewards", runs_datum, bins1, return_bins=True, samples_per_method=n1, ignore_runs=ignore, subset=["tsim_to_target"])
+    binned_datum_by_tan_sim, sim_bins, sim_empty_bins, sper_sim_bin = bin_datum_by_col(
+        "tsim_to_target", runs_datum, bins2, return_bins=True, samples_per_method=n2, ignore_runs=ignore, subset=["rewards"])    
+    fig, ax = plt.subplots(1, 2, figsize=(20, 10), squeeze=False)
+    global_df_by_rew = pd.DataFrame()
+    global_df_by_sim = pd.DataFrame()
+    for run_name, run_datum in binned_datum_by_reward.items():
+        if run_name in ignore: continue
+        dfs = [pd.DataFrame({**{'Bin': bin}, **subdict}) for bin, subdict in run_datum.items()]
+        if len(dfs) == 0: continue
+        df = pd.concat(dfs, ignore_index=True)
+        df["method"] = run_name
+        global_df_by_rew = pd.concat([global_df_by_rew, df], ignore_index=True)
+    for run_name, run_datum in binned_datum_by_tan_sim.items():
+        if run_name in ignore: continue
+        dfs = [pd.DataFrame({**{'Bin': bin}, **subdict}) for bin, subdict in run_datum.items()]
+        if len(dfs) == 0: continue
+        df = pd.concat(dfs, ignore_index=True)
+        df["method"] = run_name
+        global_df_by_sim = pd.concat([global_df_by_sim, df], ignore_index=True)
+    rew_bin_labels = [f"{rew_bins[i]:.2f}-{rew_bins[i+1]:.2f}\n({sper_rew_bin[i]})"
+                        for i in range(len(rew_bins)-1)] + [f"{rew_bins[-1]:.2f}-1.0\n({sper_rew_bin[-1]})"]
+    sim_bin_labels = [f"{sim_bins[i]:.2f}-{sim_bins[i+1]:.2f}\n({sper_sim_bin[i]})"
+                        for i in range(len(sim_bins)-1)] + [f"{sim_bins[-1]:.2f}-1.0\n({sper_sim_bin[-1]})"]
+    # Only keep the bottom 5 and top 5 bins
+    rew_bins_ne = [i for i in range(1, len(rew_bins)+1) if i not in rew_empty_bins]
+    sim_bins_ne = [i for i in range(1, len(sim_bins)+1) if i not in sim_empty_bins]
+    rew_bins_to_keep = rew_bins_ne[:5] + rew_bins_ne[-5:]
+    sim_bins_to_keep = sim_bins_ne[:5] + sim_bins_ne[-5:]
+    global_df_by_rew = global_df_by_rew[global_df_by_rew['Bin'].isin(rew_bins_to_keep)]
+    global_df_by_sim = global_df_by_sim[global_df_by_sim['Bin'].isin(sim_bins_to_keep)]
+    sns.boxplot(x="Bin", y="tsim_to_target", hue="method", data=global_df_by_rew, ax=ax[0,0],\
+                formatter=lambda x: rew_bin_labels[int(x)-1], gap=.1)
+    sns.boxplot(x="Bin", y="rewards", hue="method", data=global_df_by_sim, ax=ax[0,1],\
+                formatter=lambda x: sim_bin_labels[int(x)-1], gap=.1)
+    ax[0,0].set_title("Tanimoto Sim to Target by Reward Bins")
+    ax[0,0].set_xlabel("Reward Bin")
+    ax[0,0].set_ylabel("Tanimoto Sim")
+    ax[0,0].xaxis.set_tick_params(rotation=45)
+    ax[0,1].set_title("Reward by Tanimoto Sim to Target Bins")
+    ax[0,1].set_xlabel("Tanimoto Similarity Bin")
+    ax[0,1].set_ylabel("Reward")
+    ax[0,1].xaxis.set_tick_params(rotation=45)
+    plt.savefig(save_path)
 
-    plt.legend()
-    plt.title("Reward Distribution")
-    plt.xlabel("Reward")
-    plt.ylabel("Density")
-    plt.savefig(filename)
-    plt.clf()
+def plot_unpooled_boxplot_oracle(runs_datum, bins1=10, bins2=10, n1=2000, n2=1000, ignore=[],
+                                 save_path="unpooled_boxplot_oracle.png", **kwargs):
+    binned_datum_by_reward, rew_bins, rew_empty_bins, sper_rew_bin = bin_datum_by_col(
+        "rewards", runs_datum, bins1, return_bins=True, samples_per_method=n1, ignore_runs=ignore, subset=["smis"])
+    binned_datum_by_tan_sim, sim_bins, sim_empty_bins, sper_sim_bin = bin_datum_by_col(
+        "tsim_to_target", runs_datum, bins2, return_bins=True, samples_per_method=n2, ignore_runs=ignore, subset=["smis"])    
+    fig, ax = plt.subplots(2, 2, figsize=(20, 20))
+    global_df_by_rew = pd.DataFrame()
+    global_df_by_sim = pd.DataFrame()
+    for run_name, run_datum in binned_datum_by_reward.items():
+        if run_name in ignore: continue
+        dfs = [pd.DataFrame({**{'Bin': bin}, **get_preds_for_bin(subdict, **kwargs)})
+               for bin, subdict in run_datum.items()]
+        if len(dfs) == 0: continue
+        df = pd.concat(dfs, ignore_index=True)
+        df["method"] = run_name
+        global_df_by_rew = pd.concat([global_df_by_rew, df], ignore_index=True)
+    for run_name, run_datum in binned_datum_by_tan_sim.items():
+        if run_name in ignore: continue
+        dfs = [pd.DataFrame({**{'Bin': bin}, **get_preds_for_bin(subdict, **kwargs)})
+               for bin, subdict in run_datum.items()]
+        if len(dfs) == 0: continue
+        df = pd.concat(dfs, ignore_index=True)
+        df["method"] = run_name
+        global_df_by_sim = pd.concat([global_df_by_sim, df], ignore_index=True)
+    rew_bin_labels = [f"{rew_bins[i]:.2f}-{rew_bins[i+1]:.2f}\n({sper_rew_bin[i]})"
+                        for i in range(len(rew_bins)-1)] + [f"{rew_bins[-1]:.2f}-1.0\n({sper_rew_bin[-1]})"]
+    sim_bin_labels = [f"{sim_bins[i]:.2f}-{sim_bins[i+1]:.2f}\n({sper_sim_bin[i]})"
+                        for i in range(len(sim_bins)-1)] + [f"{sim_bins[-1]:.2f}-1.0\n({sper_sim_bin[-1]})"]
+    # Only keep the bottom 5 and top 5 bins
+    rew_bins_ne = [i for i in range(1, len(rew_bins)+1) if i not in rew_empty_bins]
+    sim_bins_ne = [i for i in range(1, len(sim_bins)+1) if i not in sim_empty_bins]
+    rew_bins_to_keep = rew_bins_ne[:5] + rew_bins_ne[-5:]
+    sim_bins_to_keep = sim_bins_ne[:5] + sim_bins_ne[-5:]
+    global_df_by_rew = global_df_by_rew[global_df_by_rew['Bin'].isin(rew_bins_to_keep)]
+    global_df_by_sim = global_df_by_sim[global_df_by_sim['Bin'].isin(sim_bins_to_keep)]
+    sns.boxplot(x="Bin", y="assay_preds", hue="method", data=global_df_by_rew, ax=ax[0,0],\
+                formatter=lambda x: rew_bin_labels[int(x)-1], gap=.1)
+    sns.boxplot(x="Bin", y="assay_preds", hue="method", data=global_df_by_sim, ax=ax[0,1],\
+                formatter=lambda x: sim_bin_labels[int(x)-1], gap=.1)
+    sns.boxplot(x="Bin", y="cluster_preds", hue="method", data=global_df_by_rew, ax=ax[1,0],\
+                formatter=lambda x: rew_bin_labels[int(x)-1], gap=.1)
+    sns.boxplot(x="Bin", y="cluster_preds", hue="method", data=global_df_by_sim, ax=ax[1,1],\
+                formatter=lambda x: sim_bin_labels[int(x)-1], gap=.1)
+    ax[0,0].set_title("Assay Logits by Reward Bins")
+    ax[0,0].set_xlabel("Reward Bin")
+    ax[0,0].set_ylabel("Assay Logit Preds")
+    ax[0,0].xaxis.set_tick_params(rotation=45)
+    ax[0,1].set_title("Assay Logits by Tanimoto Sim to Target Bins")
+    ax[0,1].set_xlabel("Tanimoto Similarity Bin")
+    ax[0,1].set_ylabel("Assay Logit Preds")
+    ax[0,1].xaxis.set_tick_params(rotation=45)
+    ax[1,0].set_title("Cluster Logits by Reward Bins")
+    ax[1,0].set_xlabel("Reward Bin")
+    ax[1,0].set_ylabel("Cluster Logit Preds")
+    ax[1,0].xaxis.set_tick_params(rotation=45)
+    ax[1,1].set_title("Cluster Logits by Tanimoto Sim to Target Bins")
+    ax[1,1].set_xlabel("Tanimoto Similarity Bin")
+    ax[1,1].set_ylabel("Cluster Logit Preds")
+    ax[1,1].xaxis.set_tick_params(rotation=45)
+    plt.savefig(save_path)
 
-def plot_umap(fps, target_fp, rews, k=200, sim_threshold=0.7, filename="umap-fps.png"):
-    # Plot umap of molecular fingerprints of top-k highest reward molecules per method
-    n_neighbors = [20, 30, 40, 50, 60]
-    all_fps = []
-    for model_name, fp in fps.items():
-        if model_name == "Target": continue
-        elif model_name == "PUMA":
-            # randomly sample 10*k molecules from the dataset
-            # top_k_idx = np.random.choice(len(fp), min(10*k, len(fp)), replace=False)
-            top_k_idx = np.argsort(rews[model_name])[::-1][:10*k]
-        else:
-            # get top-k most dissimilar molecules with highest reward (modes)
-            top_k_idx = get_top_k_dissimilar_modes(
-                fp, target_fp, rews[model_name],
-                sim_threshold=sim_threshold, k=k
-            )
-            print(f"Found {len(top_k_idx)} modes for {model_name}")
-        fps[model_name] = [fp[i] for i in top_k_idx]
-        rews[model_name] = [rews[model_name][i] for i in top_k_idx]
-        all_fps.extend(fps[model_name])
+def plot_assay_cluster_preds_hist(runs_datum, k=10000, bins=50,
+                                  ignore=[], save_path="assay_cluster_preds_hist.png"):
+    fig, ax = plt.subplots(2, 3, figsize=(30, 20))
+    dfa, dfc = pd.DataFrame(), pd.DataFrame()
+    for run_name, run_datum in runs_datum.items():
+        if run_name in ignore: continue
+        rew_ap = run_datum['top_k_reward_assay_preds'][:k]
+        rew_cp = run_datum['top_k_reward_cluster_preds'][:k]
+        mod_ap = run_datum['top_k_modes_assay_preds'][:k]
+        mod_cp = run_datum['top_k_modes_cluster_preds'][:k]
+        sim_ap = run_datum['top_k_tsim_assay_preds'][:k]
+        sim_cp = run_datum['top_k_tsim_cluster_preds'][:k]
+        ap_merged = np.concatenate([rew_ap, mod_ap, sim_ap])
+        cp_merged = np.concatenate([rew_cp, mod_cp, sim_cp])
+        ap_type = ["rew"] * len(rew_ap) + ["mod"] * len(mod_ap) + ["sim"] * len(sim_ap)
+        cp_type = ["rew"] * len(rew_cp) + ["mod"] * len(mod_cp) + ["sim"] * len(sim_cp)
+        dfa = pd.concat([dfa, pd.DataFrame({
+            "method": [run_name] * len(ap_merged),
+            "value": ap_merged,
+            "type": ap_type,
+        })])
+        dfc = pd.concat([dfc, pd.DataFrame({
+            "method": [run_name] * len(cp_merged),
+            "value": cp_merged,
+            "type": cp_type,
+        })])
+    if len(dfa) > 0:
+        sns.histplot(data=dfa[dfa['type'] == 'rew'], x="value", hue="method", bins=bins, ax=ax[0,0], stat='density', alpha=0.5, common_norm=False)
+        sns.histplot(data=dfa[dfa['type'] == 'mod'], x="value", hue="method", bins=bins, ax=ax[0,1], stat='density', alpha=0.5, common_norm=False)
+        sns.histplot(data=dfa[dfa['type'] == 'sim'], x="value", hue="method", bins=bins, ax=ax[0,2], stat='density', alpha=0.5, common_norm=False)
+    if len(dfc) > 0:
+        sns.histplot(data=dfc[dfc['type'] == 'rew'], x="value", hue="method", bins=bins, ax=ax[1,0], stat='density', alpha=0.5, common_norm=False)
+        sns.histplot(data=dfc[dfc['type'] == 'mod'], x="value", hue="method", bins=bins, ax=ax[1,1], stat='density', alpha=0.5, common_norm=False)
+        sns.histplot(data=dfc[dfc['type'] == 'sim'], x="value", hue="method", bins=bins, ax=ax[1,2], stat='density', alpha=0.5, common_norm=False)
+    ax[0,0].set_title(f"Predicted Assay Logits of Top-{k} Samples by Reward")
+    ax[0,1].set_title(f"Predicted Assay Logits of Top-{k} Modes")
+    ax[0,2].set_title(f"Predicted Assay Logits of Top-{k} Samples by TanSim to Target")
+    ax[1,0].set_title(f"Predicted Cluster Logits of Top-{k} Samples by Reward")
+    ax[1,1].set_title(f"Predicted Cluster Logits of Top-{k} Modes")
+    ax[1,2].set_title(f"Predicted Cluster Logits of Top-{k} Samples by TanSim to Target")
+    ax[0,0].set_xlabel("Assay Logit")
+    ax[1,0].set_xlabel("Cluster Logit")
+    ax[0,0].set_yscale('log')
+    ax[0,1].set_yscale('log')
+    ax[0,2].set_yscale('log')
+    ax[1,0].set_yscale('log')
+    ax[1,1].set_yscale('log')
+    ax[1,2].set_yscale('log')
+    plt.savefig(save_path)
 
-    for n_neigh in n_neighbors:
-        print(f"Running umap with {n_neigh} neighbors")
-        reducer = umap.UMAP(n_neighbors=n_neigh, random_state=42, verbose=True, min_dist=0.1, metric="jaccard")
-        reducer = reducer.fit(all_fps)
-
-        for model_name, fp in fps.items():
-            if len(fp) == 0: continue
-            fp_reduced = reducer.transform(fp)
-            s = 2
-            a = [r**8 for r in rews[model_name]]
-            if model_name == "Target":
-                s = 25
-                a = 1
-                
-            plt.scatter(fp_reduced[:, 0], fp_reduced[:, 1], label=model_name, alpha=a, s=s)
-
-        plt.legend()
-        plt.title("UMAP of molecular fps")
-        plt.xlabel("umap1")
-        plt.ylabel("umap2")
-        plt.savefig(f"results/{n_neigh}n_{filename}")
-        plt.clf()
-
-def plot_assay_logit_hist(smis, rews, model, active_cols, k=500, filename="assay-logit-hist.png"):
-    # Plots a histogram of the logit distribution of top-k highest reward molecules from each method
-    active_cols = torch.tensor(active_cols) if isinstance(active_cols, list) else active_cols
-    fig, ax = plt.subplots(1, len(active_cols), figsize=(5*len(active_cols), 5), squeeze=False)
-
-    for model_name, smi in smis.items():
-        if len(smi) < k or model_name in ["Target"]:
-            continue
-
-        # choose the top-k smi with highest rew
-        top_k_idx = np.argsort(rews[model_name])[::-1][:k]
-        top_k_smi = [smi[i] for i in top_k_idx]
-        
-        # create a test dataset using the smiles and run inference with assay model
-        test_df = pd.DataFrame(top_k_smi, columns=["smiles"])
-        dataset = TestDataset(test_df, mol_col="smiles", label_col=None)
-        y_hat = model(next(iter(make_eval_data_loader(dataset, batch_size=k))))
-
-        # keep the logit values for the active columns
-        logit_values = torch.index_select(y_hat[0].detach().cpu(), 1, active_cols).numpy()
-
-        # for each active column, we produce a separate hist plot of the logit values
-        for i, col in enumerate(active_cols):
-            ax[0,i].hist(logit_values[:, i], bins=50, label=model_name, alpha=0.4, density=True)
-    
-    for i, col in enumerate(active_cols):
-        ax[0,i].legend()
-        ax[0,i].set_title(f"Logit Distribution for assay {col}")
-        ax[0,i].set_xlabel("Logit Value")
-        ax[0,i].set_ylabel("Density")
-        
-    plt.savefig(filename)
-    plt.clf()
-
-
-def setup_puma():
-    # Load config for MMC model
-    config_name = "puma_sm_gmc"
-    configs_path = "../multimodal_contrastive/configs"
-
-    with hydra.initialize(version_base=None, config_path=configs_path):
-        cfg = hydra.compose(config_name=config_name)
-
-    print(cfg.datamodule.split_type)
-    if cfg.get("seed"): seed_everything(cfg.seed, workers=True)
-
-    datamodule: LightningDataModule = hydra.utils.instantiate(cfg.datamodule)
-    datamodule.setup("test")
-    return datamodule, cfg
-
-
-def load_assay_pred_model():
-    ckpt = '/home/mila/s/stephen.lu/gfn_gene/res/mmc/models/puma_assay_epoch=139.ckpt'
-    model = MultiTask_FP_PL.load_from_checkpoint(ckpt, map_location=device)
-    model.eval()
-    return model
-
-def get_active_assay_cols(dataset, smi):
-    # returns the column indices of the active assays == 1 for a given target smile
-    if smi not in dataset.ids: return None
-    target_idx = np.where(np.array(dataset.ids)==smi)[0][0]
-    return torch.where(dataset.y[target_idx] == 1)[0]
-
-def load_assay_matrix_from_csv():
-    data_dir = '/home/mila/s/stephen.lu/scratch/mmc/datasets/'
-    dataset = TestDataset(data_dir + 'assay_matrix_discrete_37_assays_canonical.csv')
-    return dataset
-
-def load_mmc_model(cfg):
-    # Load model from checkpoint
-    ckpt_path = "/home/mila/s/stephen.lu/gfn_gene/res/mmc/models/epoch=72-step=7738.ckpt"
-    model = utils.instantiate_model(cfg)
-    model = model.load_from_checkpoint(ckpt_path, map_location=device)
-    model = model.eval()
-    return model
-
-def inference_puma(datamodule, cfg):
-    # Get latent representations for full dataset
-    model = load_mmc_model(cfg)
-    representations = model.compute_representation_dataloader(
-        make_eval_data_loader(datamodule.dataset),
-        device=device,
-        return_mol=False
-    )
-    return representations
-
-
-def get_representations():
-    data_dir = "/home/mila/s/stephen.lu/gfn_gene/res/mmc/data"
-    try:
-        res = np.load(f"{data_dir}/puma_embeddings.npz", allow_pickle=True)
-    except FileNotFoundError:
-        datamodule, cfg = setup_puma()
-        res = inference_puma(datamodule, cfg)
-        np.savez(f"{data_dir}/puma_embeddings.npz", **res)
-    return res
-
-
-def get_fp_from_base64(base64_fp):
-    fp_from_base64 = ExplicitBitVect(2048)
-    fp_from_base64.FromBase64(base64_fp)
-    return fp_from_base64
-
-
-def get_fp_from_bit_array(bit_array):
-    fp = ExplicitBitVect(2048)
-    fp.SetBitsFromList((np.where(bit_array)[0].tolist()))
-    return fp
-
-
-def get_fp_from_base64_or_bit_array(fp):
-    if isinstance(fp, str):
-        return get_fp_from_base64(fp)
-    return get_fp_from_bit_array(fp)
-
-
-def get_fingerprints(fpgen):
-    data_dir = "/home/mila/s/stephen.lu/gfn_gene/res/mmc/data"
-    try:
-        res = np.load(f"{data_dir}/puma_fingerprints.npy", allow_pickle=True)
-        res = list(map(get_fp_from_base64, res))
-    except FileNotFoundError:
-        res = []
-        datamodule, _ = setup_puma()
-        for idx in tqdm(range(len(datamodule.dataset))):
-            smi = datamodule.dataset[idx]["inputs"]["struct"].mols
-            mol = Chem.MolFromSmiles(smi)
-            fp = fpgen.GetFingerprint(mol)
-            res.append(fp)
-    return res
-
-
-def sqlite_load(root, columns, num_workers=8, upto=None, begin=0):
-    try:
-        bar = tqdm(smoothing=0)
-        values = defaultdict(lambda: [[] for i in range(num_workers)])
-        for i in range(num_workers):
-            con = sqlite3.connect(
-                f"file:{root}generated_mols_{i}.db?mode=ro", uri=True, timeout=6
-            )
-            cur = con.cursor()
-            cur.execute("pragma mmap_size = 134217728")
-            cur.execute("pragma cache_size = -1024000;")
-            r = cur.execute(
-                f'select {",".join(columns)} from results where rowid >= {begin}'
-            )
-            n = 0
-            for j, row in enumerate(r):
-                bar.update()
-                for value, col_name in zip(row, columns):
-                    values[col_name][i].append(value)
-                n += 1
-                if upto is not None and n * num_workers > upto:
-                    break
-            con.close()
-        return values
-    finally:
-        bar.close()
-
-
-def is_new_mode(modes_fp, new_fp, sim_threshold=0.7):
-    """Returns True if obj is a new mode, False otherwise"""
-    if len(modes_fp) == 0:
-        return True
-
-    if new_fp is None:
-        return False
-    
-    sim_scores = AllChem.DataStructs.BulkTanimotoSimilarity(new_fp, modes_fp)
-    return all(s < sim_threshold for s in sim_scores)
-
-def get_top_k_dissimilar_modes(fps, target_fp, rews, sim_threshold=0.7, k=100):
-    """
-    Returns the index of the top k molecules with the highest reward with mutual 
-    tanimoto similarity <= sim_threshold
-    """
-    # first, sort the molecules by reward
-    sorted_idx = np.argsort(rews)[::-1]
-    sorted_fps = [fps[i] for i in sorted_idx]
-    # while we haven't reached k modes, or if we've exhausted molecules,
-    # check if the new molecule is a new mode
-    modes_fp = []
-    modes_idx = []
-    for i, fp in enumerate(sorted_fps):
-        if len(modes_fp) >= k: break
-        if is_new_mode(modes_fp, fp, sim_threshold):
-            modes_fp.append(fp)
-            modes_idx.append(sorted_idx[i])
-    return modes_idx
-
-
-def get_data_from_run(base_dir, run_id, target_fp):
-    # Obtain sampled data from the run
-    run_dir = f"{base_dir}/{run_id}"
-    values = sqlite_load(f"{run_dir}/train/", sqlite_cols, 1)
-    smis, rewards = values['smi'][0], values['fr_0'][0]
-    high = 0
-
-    try:
-        filtered_fps = np.load(f"{run_dir}/fps.npy", allow_pickle=True)
-        filtered_fps = list(map(get_fp_from_base64_or_bit_array, tqdm(filtered_fps)))
-        assert len(filtered_fps) == len(smis)
-    except FileNotFoundError:
-        raise FileNotFoundError(f"Filtered fps not found for {model_name}")
-
-    for idx, (smi, r) in tqdm(enumerate(zip(smis, rewards))):
-        fp = filtered_fps[idx]
-        tanimoto_sim = AllChem.DataStructs.TanimotoSimilarity(target_fp, fp)
-        if tanimoto_sim > high:
-            high = tanimoto_sim
-            print(high, r)
-        filtered_fps.append(fp)
-    
-    return filtered_fps, rewards, smis
-
-
-def get_data_for_baseline_run(base_dir, run_id, target_latent, cfg):
-    filtered_fps, _, smis = get_data_from_run(base_dir, run_id, target_fp)
-    # now we need to recompute latents for these random samples and obtain their rewards
-    # first, I don't wanna run inference on 640000 samples, so let's randomly take a subset
-    rnd_idx = np.random.choice(len(smis), 10000, replace=False)
-    smis = [smis[i] for i in rnd_idx]
-    filtered_fps = [filtered_fps[i] for i in rnd_idx]
-    # now, we need to build a dataloader from these smis that we can pass to the mmc model
-    mmc_model = load_mmc_model(cfg)
-    graphs = [mol2graph(Chem.MolFromSmiles(smi)) for smi in smis]
-    batch = gd.Batch.from_data_list([i for i in graphs if i is not None])
-    batch.to(mmc_model.device if hasattr(mmc_model, 'device') else device)
-    preds = mmc_model({"inputs": {"struct": batch}}, mod_name="struct")
-    preds = preds.data.cpu().detach().numpy()
-    rewards = (cosine_similarity(target_latent, preds) + 1) / 2
-    return filtered_fps, rewards, smis
-
-
-if __name__ == "__main__":
-    base_dir = "/home/mila/s/stephen.lu/scratch/gfn_gene/wandb_sweeps"
-    sim_threshold = 0.2
-    
-    models = {
-        "6888": "04-24-01-46-morph-sim-final-targets/amber-sweep-7-id-dxn50jrg",
-        "2288": "04-24-01-46-morph-sim-final-targets/dandy-sweep-5-id-ongkpkty",
-        "338": "04-24-01-46-morph-sim-final-targets/logical-sweep-2-id-kl0ygljq",
-        "4331": "04-24-01-46-morph-sim-final-targets/pleasant-sweep-6-id-w9d4thq9",
-        "8949": "04-25-08-32-morph-sim-run-failed-8949/true-sweep-1-id-xodl84ba",
-        "903": "04-24-01-46-morph-sim-final-targets/snowy-sweep-3-id-in1e3736",
-        "1847": "04-24-01-46-morph-sim-final-targets/splendid-sweep-4-id-o4l26cxc",
-        "8838": "04-24-01-46-morph-sim-final-targets/stilted-sweep-9-id-e0h282g0",
-        "9277": "04-24-01-46-morph-sim-final-targets/sunny-sweep-11-id-66qel5x0",
-        "8206": "04-24-01-46-morph-sim-final-targets/sweet-sweep-8-id-fr5fx186",
-        "39": "04-24-01-46-morph-sim-final-targets/young-sweep-1-id-6ifys7pm",
-        "9476": "04-24-01-49-morph-sim-final-targets/astral-sweep-14-id-pih6w90m",
-        "13905": "04-24-01-49-morph-sim-final-targets/azure-sweep-17-id-fgtpgfuz",
-        "12071": "04-24-01-49-morph-sim-final-targets/deep-sweep-16-id-lij3uk3z",
-        "9445": "04-24-01-49-morph-sim-final-targets/ethereal-sweep-13-id-fcbo3yhr",
-        "10075": "04-24-01-49-morph-sim-final-targets/fiery-sweep-15-id-3fj60c6m",
-        "9300": "04-24-01-49-morph-sim-final-targets/twilight-sweep-12-id-laveyrao",
-    }
-
-    fpgen = AllChem.GetRDKitFPGenerator(
-        maxPath=7,
-        branchedPaths=False,
-    )
-
-    # Obtain representations and fingerprints for puma dataset
-    datamodule, _ = setup_puma()
-    representations = get_representations()
-    dataset_fps = get_fingerprints(fpgen)
-    dataset_smis = [x["inputs"]["struct"].mols for x in datamodule.dataset]
-    assay_dataset = load_assay_matrix_from_csv()
-    assay_model = load_assay_pred_model()
-
-    for model_name, run_id in models.items():
-        print(f"Running for model: ", model_name)
-
-        # Obtain representations, fingerprints, and active assay columns for target and dataset
-        target_idx = int(model_name)
-        target_fp = dataset_fps[target_idx]
-        target_smi = datamodule.dataset[target_idx]["inputs"]["struct"].mols.decode("utf-8")
-        target_struct_latent = representations['struct'][target_idx]
-        target_morph_latent = representations['morph'][target_idx]
-        target_active_assay_cols = get_active_assay_cols(assay_dataset, target_smi)
-        target_reward = cosine_similarity(target_struct_latent.reshape(1, -1), target_morph_latent.reshape(1, -1))[0][0]
-        dataset_rewards = ((cosine_similarity(representations['struct'], target_morph_latent.reshape(1, -1)) + 1) / 2).reshape(-1,)
-
-        print('Target has morph~struct cosine sim: ', target_reward)
-
-        # Collect the data we need for plotting
-        fps = { "Target": [target_fp], "PUMA": dataset_fps }
-        rews = { "Target": [target_reward], "PUMA": dataset_rewards }
-        smiles = { "Target": [target_smi], "PUMA":  dataset_smis }
-
-        # Get data from run
-        filtered_fps, rewards, smis = get_data_from_run(base_dir, run_id, target_fp)
-
-        fps[model_name] = filtered_fps
-        rews[model_name] = rewards
-        smiles[model_name] = smis
-
-        print("Finished processing for model: ", model_name)
-    
-        if target_active_assay_cols is not None:
-            plot_assay_logit_hist(smiles, rews, assay_model, target_active_assay_cols, k=500, filename=f"results/assay-logit-hist_{target_idx}.png")
-        
-        plot_reward_hist(rews, f"results/reward-hist-target_{target_idx}.png")
-        plot_pairwise_sim_hist(fps, rews, k=50, filename=f"results/tanimoto-sim-betw-samples_{target_idx}.png")
-        plot_sim_to_target_hist(fps, target_fp, rews, k=200, by="similarity", filename=f"results/tan-sim-to-target_{target_idx}_by_sim.png")
-        plot_sim_to_target_hist(fps, target_fp, rews, k=200, by="reward", filename=f"results/tan-sim-to-target_{target_idx}_by_rew.png")
-        plot_umap(fps, target_fp, rews, k=200, sim_threshold=sim_threshold, filename=f"umap_top_200_<{sim_threshold}_target_{target_idx}.png")
-
-        print("Finished plotting for model: ", model_name)
+def plot_umap_from_runs_datum(runs_datum, target_fp, target_rew, sim_thresh=0.7, n_neigh=30, k=5000, 
+    ignore=[], save_path="umap-mols.png"):
+    fig, ax = plt.subplots(1, 2, figsize=(20, 10))
+    df1, df2 = pd.DataFrame(), pd.DataFrame()
+    model = umap.UMAP(n_components=2, n_neighbors=n_neigh, random_state=42, verbose=False, 
+                      min_dist=0.01, metric="euclidean")
+    max_reward = max([max(run_datum['rewards']) for run_datum in runs_datum.values()])
+    min_reward = min([min(run_datum['rewards']) for run_datum in runs_datum.values()])
+    norm_color_by_reward = lambda x: ((x - min_reward) / (max_reward - min_reward))**4
+    target_color = norm_color_by_reward(target_rew)
+    for run_name, run_datum in runs_datum.items():
+        if run_name in ignore: continue
+        rewards = run_datum['rewards']
+        top_k_modes_fps = run_datum['top_k_modes_fps'][:k]
+        top_k_modes_rew = rewards[run_datum['top_k_modes_idx'][:k]]
+        top_k_reward_fps = run_datum['top_k_reward_fps'][:k]
+        top_k_reward_rew = rewards[run_datum['top_k_reward_idx'][:k]]
+        df1 = pd.concat([df1, pd.DataFrame({
+            "method": [run_name] * len(top_k_modes_fps),
+            "fps": top_k_modes_fps,
+            "rewards": top_k_modes_rew,
+            "alpha": list(map(norm_color_by_reward, top_k_modes_rew)),
+        })], ignore_index=True)
+        df2 = pd.concat([df2, pd.DataFrame({
+            "method": [run_name] * len(top_k_reward_fps),
+            "fps": top_k_reward_fps,
+            "rewards": top_k_reward_rew,
+            "alpha": list(map(norm_color_by_reward, top_k_reward_rew)),
+        })], ignore_index=True)
+    umap_top_modes = model.fit_transform(list(df1["fps"]))
+    target_umap = model.transform([target_fp])
+    df1["umap_0"], df1["umap_1"] = umap_top_modes[:,0], umap_top_modes[:,1]
+    sns.scatterplot(x=target_umap[:, 0], y=target_umap[:, 1], ax=ax[0], label="Target", color="black", s=100, alpha=target_color)
+    for run_name, _ in runs_datum.items():
+        df1_method = df1[df1['method'] == run_name]
+        sns.scatterplot(x=df1_method["umap_0"], y=df1_method["umap_1"], ax=ax[0],
+                        alpha=df1_method['alpha'], label=run_name)
+    umap_top_rewards = model.fit_transform(list(df2["fps"]))
+    target_umap = model.transform([target_fp])
+    df2["umap_0"], df2["umap_1"] = umap_top_rewards[:,0], umap_top_rewards[:,1]
+    sns.scatterplot(x=target_umap[:, 0], y=target_umap[:, 1], ax=ax[1], label="Target", color="black", s=100, alpha=target_color)
+    for run_name, _ in runs_datum.items():
+        df2_method = df2[df2['method'] == run_name]
+        sns.scatterplot(x=df2_method["umap_0"], y=df2_method["umap_1"], ax=ax[1],
+                        alpha=df2_method['alpha'], label=run_name)
+    ax[0].set_title(f"UMAP of Top-{k} modes with Tanimoto sim <= {sim_thresh}")
+    ax[1].set_title(f"UMAP of Top-{k} samples by reward")
+    ax[0].set_xlabel("UMAP 1")
+    ax[0].set_ylabel("UMAP 2")
+    ax[1].set_xlabel("UMAP 1")
+    ax[1].set_ylabel("UMAP 2")
+    norm = Normalize(vmin=min_reward, vmax=max_reward)
+    reward_to_rgba = lambda x: (0, 0, 0, norm_color_by_reward(x))
+    colors = [reward_to_rgba(norm(x)) for x in np.linspace(min_reward, max_reward, 100)]
+    cmap = LinearSegmentedColormap.from_list('reward_cmap', colors)
+    sm = plt.cm.ScalarMappable(norm=norm, cmap=cmap)
+    cbar = plt.colorbar(sm, ax=ax[1], location="right")
+    cbar.set_label('Reward')
+    plt.tight_layout()
+    plt.savefig(save_path)

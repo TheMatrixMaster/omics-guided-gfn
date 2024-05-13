@@ -1,7 +1,8 @@
 #!/bin/bash
 #SBATCH --partition=long
 #SBATCH --cpus-per-task=8
-#SBATCH --mem=32G
+#SBATCH --gres=gpu:1
+#SBATCH --mem=64G
 #SBATCH --time=11:59:59
 
 # >>> conda initialize >>>
@@ -29,4 +30,6 @@ export CUDA_LAUNCH_BLOCKING=1
 export HYDRA_FULL_ERROR=1
 
 # Start the job
-python /home/mila/s/stephen.lu/gfn_gene/vis/save_fingerprints.py
+# python /home/mila/s/stephen.lu/gfn_gene/vis/infer.py
+# python /home/mila/s/stephen.lu/gfn_gene/vis/main.py
+python /home/mila/s/stephen.lu/gfn_gene/vis/aggr.py

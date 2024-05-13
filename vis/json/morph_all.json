@@ -1,0 +1,70 @@
+[
+    {
+        "target_idx": 39,
+        "reward_thresh": 0.95,
+        "run_paths": {
+            "RND": "04-30-01-41-morph-sim-run-random-baselines/robust-sweep-1-id-21hzaq8h",
+            "GFN(t=32)": "04-30-03-06-morph-sim-run-with-dataset/laced-sweep-1-id-ykgjh85t"
+        }
+    },
+    {
+        "target_idx": 903,
+        "reward_thresh": 0.95,
+        "run_paths": {
+            "GFN(t=1)": "04-30-05-48-morph-sim-run-lower-temp/driven-sweep-2-id-721585y2",
+            "GFN(t=32)": "04-30-03-06-morph-sim-run-with-dataset/stoic-sweep-2-id-4kd1wvak",
+            "GFN(t=64)": "05-06-06-21-morph-sim-903-high-temp/solar-sweep-1-id-7mlasa01",
+            "GFN(t=128)": "05-06-06-24-morph-sim-903-high-temp/tough-sweep-2-id-2ao10i82",
+            "RND": "04-30-01-59-morph-sim-run-random-baselines/devoted-sweep-2-id-lipfnja5"
+        }
+    },
+    {
+        "target_idx": 1847,
+        "reward_thresh": 0.95,
+        "run_paths": {
+            "RND": "04-30-01-59-morph-sim-run-random-baselines/fearless-sweep-3-id-r3ckwe3y",
+            "GFN(t=32)": "04-30-03-15-morph-sim-run-with-dataset/ethereal-sweep-3-id-d0zm1pyc"
+        }
+    },
+    {
+        "target_idx": 2288,
+        "reward_thresh": 0.95,
+        "run_paths": {
+            "RND": "04-30-02-01-morph-sim-run-random-baselines/likely-sweep-4-id-ypcvjb7u",
+            "GFN(t=32)": "04-30-03-15-morph-sim-run-with-dataset/deft-sweep-4-id-19f3rox1"
+        }
+    },
+    {
+        "target_idx": 6888,
+        "reward_thresh": 0.95,
+        "run_paths": {
+            "RND": "04-30-02-01-morph-sim-run-random-baselines/hardy-sweep-5-id-aleb8abd",
+            "GFN(t=32)": "04-30-03-15-morph-sim-run-with-dataset/apricot-sweep-5-id-jdxb6cfc"
+        }
+    },
+    {
+        "target_idx": 8838,
+        "reward_thresh": 0.95,
+        "run_paths": {
+            "RND": "04-30-02-01-morph-sim-run-random-baselines/jolly-sweep-6-id-cx14juh1",
+            "GFN(t=32)": "04-30-03-15-morph-sim-run-with-dataset/polished-sweep-6-id-n7sscdfw"
+        }
+    },
+    {
+        "target_idx": 10075,
+        "reward_thresh": 0.95,
+        "run_paths": {
+            "RND": "04-30-02-01-morph-sim-run-random-baselines/jumping-sweep-7-id-i8wcg6pm",
+            "GFN(t=32)": "04-30-03-15-morph-sim-run-with-dataset/noble-sweep-7-id-1ln6frlw"
+        }
+    },
+    {
+        "target_idx": 13905,
+        "reward_thresh": 0.95,
+        "run_paths": {
+            "RND": "04-30-02-01-morph-sim-run-random-baselines/skilled-sweep-8-id-s6a7y4qg",
+            "GFN(t=32)": "04-30-03-15-morph-sim-run-with-dataset/brisk-sweep-8-id-5tmb3vae"
+        }
+    }
+]
+

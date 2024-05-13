@@ -1,0 +1,66 @@
+[
+    {
+        "target_idx": 10075,
+        "reward_thresh": 0.95,
+        "run_paths": {
+            "RND": "04-30-02-01-morph-sim-run-random-baselines/jumping-sweep-7-id-i8wcg6pm",
+            "GFN(t=64)": "05-10-09-13-morph-only-high-temp/robust-sweep-7-id-ppqs6aod"
+        }
+    },
+    {
+        "target_idx": 39,
+        "reward_thresh": 0.95,
+        "run_paths": {
+            "RND": "04-30-01-41-morph-sim-run-random-baselines/robust-sweep-1-id-21hzaq8h",
+            "GFN(t=64)": "05-10-09-04-morph-only-high-temp/prime-sweep-1-id-p2weblex"
+        }
+    },
+    {
+        "target_idx": 903,
+        "reward_thresh": 0.95,
+        "run_paths": {
+            "RND": "04-30-01-59-morph-sim-run-random-baselines/devoted-sweep-2-id-lipfnja5",
+            "GFN(t=64)": "05-10-09-04-morph-only-high-temp/cosmic-sweep-2-id-xh8u7867"
+        }
+    },
+    {
+        "target_idx": 1847,
+        "reward_thresh": 0.95,
+        "run_paths": {
+            "RND": "04-30-01-59-morph-sim-run-random-baselines/fearless-sweep-3-id-r3ckwe3y",
+            "GFN(t=64)": "05-10-09-04-morph-only-high-temp/clear-sweep-3-id-u0tuc5fh"
+        }
+    },
+    {
+        "target_idx": 2288,
+        "reward_thresh": 0.95,
+        "run_paths": {
+            "RND": "04-30-02-01-morph-sim-run-random-baselines/likely-sweep-4-id-ypcvjb7u",
+            "GFN(t=64)": "05-10-09-07-morph-only-high-temp/resilient-sweep-4-id-fccql391"
+        }
+    },
+    {
+        "target_idx": 6888,
+        "reward_thresh": 0.95,
+        "run_paths": {
+            "RND": "04-30-02-01-morph-sim-run-random-baselines/hardy-sweep-5-id-aleb8abd",
+            "GFN(t=64)": "05-10-09-07-morph-only-high-temp/sleek-sweep-5-id-ikaxtabn"
+        }
+    },
+    {
+        "target_idx": 8838,
+        "reward_thresh": 0.95,
+        "run_paths": {
+            "RND": "04-30-02-01-morph-sim-run-random-baselines/jolly-sweep-6-id-cx14juh1",
+            "GFN(t=64)": "05-10-09-10-morph-only-high-temp/exalted-sweep-6-id-24v2tnx4"
+        }
+    },
+    {
+        "target_idx": 13905,
+        "reward_thresh": 0.95,
+        "run_paths": {
+            "RND": "04-30-02-01-morph-sim-run-random-baselines/skilled-sweep-8-id-s6a7y4qg",
+            "GFN(t=64)": "05-10-09-16-morph-only-high-temp/summer-sweep-8-id-ceik6u7b"
+        }
+    }
+]

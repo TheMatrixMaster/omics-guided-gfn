@@ -1,0 +1,192 @@
+cuda
+()
+()
+Target assay predicted logits:  0.91311973
+Target cluster 1 active logit:  0.8122271
+Processing samples for 39 w/ Cluster id: 1 and Assay cols: tensor([2])
+Generating fps...
+Removed 2539 duplicates
+RND topk tsim to target:  0.11255796389020072 0.13725490196078433 0.29577464788732394
+RND full tsim to target:  0.0935459123635107 0.12745098039215685 0.29577464788732394
+RND topk assay preds:  0.11322151 0.15801405906677246 0.955466
+RND topk cluster preds:  0.5027948 0.7557774037122726 0.9998704
+
+Generating fps...
+Removed 0 duplicates
+GFN(t=32) topk tsim to target:  0.14027755480443396 0.15853658536585366 0.32051282051282054
+GFN(t=32) full tsim to target:  0.13948216870206975 0.15730337078651685 0.3375
+GFN(t=32) topk assay preds:  0.09869221 0.13385115936398506 0.8380687
+GFN(t=32) topk cluster preds:  0.5014005 0.7680663019418716 0.9998473
+
+Finished loading data for target 39. Now merging
+()
+()
+Target assay predicted logits:  0.9278761
+Target cluster 8 active logit:  0.5761997
+Processing samples for 903 w/ Cluster id: 8 and Assay cols: tensor([2])
+Generating fps...
+Removed 31 duplicates
+GFN(t=32) topk tsim to target:  0.14742484523313945 0.16666666666666666 0.6222222222222222
+GFN(t=32) full tsim to target:  0.1409235819458356 0.16129032258064516 0.6222222222222222
+GFN(t=32) topk assay preds:  0.11181675 0.15263984352350235 0.9436098
+GFN(t=32) topk cluster preds:  0.044135213 0.05668393522500992 0.6818928
+
+Generating fps...
+Removed 2696 duplicates
+RND topk tsim to target:  0.09352474288254786 0.11842105263157894 0.6136363636363636
+RND full tsim to target:  0.06117776275524618 0.08928571428571429 0.6136363636363636
+RND topk assay preds:  0.12602264 0.17499655857682228 0.9553264
+RND topk cluster preds:  0.048867714 0.062271445989608765 0.55166024
+
+Finished loading data for target 903. Now merging
+()
+()
+Target assay predicted logits:  0.23693313
+Target cluster 1 active logit:  0.86416656
+Processing samples for 1847 w/ Cluster id: 1 and Assay cols: tensor([2])
+Generating fps...
+Removed 2525 duplicates
+RND topk tsim to target:  0.08462028079963518 0.10416666666666667 0.3076923076923077
+RND full tsim to target:  0.07481222984051547 0.09803921568627451 0.3076923076923077
+RND topk assay preds:  0.11008337 0.149094108492136 0.9484763
+RND topk cluster preds:  0.48956132 0.7435974627733231 0.99986863
+
+Generating fps...
+Removed 0 duplicates
+GFN(t=32) topk tsim to target:  0.08643987423593745 0.0975609756097561 0.29850746268656714
+GFN(t=32) full tsim to target:  0.08672029431228989 0.0989010989010989 0.29850746268656714
+GFN(t=32) topk assay preds:  0.117776684 0.15788857266306877 0.8444832
+GFN(t=32) topk cluster preds:  0.38572598 0.5931686013936996 0.99898654
+
+Finished loading data for target 1847. Now merging
+()
+()
+Target assay predicted logits:  0.9142955
+Target cluster 1 active logit:  0.8886371
+Processing samples for 2288 w/ Cluster id: 1 and Assay cols: tensor([20])
+Generating fps...
+Removed 2673 duplicates
+RND topk tsim to target:  0.09731461497953517 0.12 0.3090909090909091
+RND full tsim to target:  0.07847260628491945 0.10606060606060606 0.3090909090909091
+RND topk assay preds:  0.10699658 0.15193547680974007 0.90679026
+RND topk cluster preds:  0.52046883 0.7657812237739563 0.9999585
+
+Generating fps...
+Removed 1 duplicates
+GFN(t=32) topk tsim to target:  0.13594751692154583 0.16049382716049382 0.4107142857142857
+GFN(t=32) full tsim to target:  0.1284062945675364 0.1518987341772152 0.4107142857142857
+GFN(t=32) topk assay preds:  0.09131256 0.12094769440591335 0.857988
+GFN(t=32) topk cluster preds:  0.51332176 0.7798682749271393 0.99986327
+
+Finished loading data for target 2288. Now merging
+()
+()
+Target assay predicted logits:  0.91171366
+Target cluster 1 active logit:  0.83522904
+Processing samples for 6888 w/ Cluster id: 1 and Assay cols: tensor([2])
+Generating fps...
+Removed 2569 duplicates
+RND topk tsim to target:  0.09466023929660748 0.11594202898550725 0.24731182795698925
+RND full tsim to target:  0.07924787125440927 0.10526315789473684 0.24731182795698925
+RND topk assay preds:  0.09857073 0.12939754128456116 0.88940376
+RND topk cluster preds:  0.5369742 0.7837491631507874 0.9999896
+
+Generating fps...
+Removed 0 duplicates
+GFN(t=32) topk tsim to target:  0.11561205152088842 0.13 0.25842696629213485
+GFN(t=32) full tsim to target:  0.11267546514868902 0.12727272727272726 0.25842696629213485
+GFN(t=32) topk assay preds:  0.05158468 0.05709720868617296 0.7753243
+GFN(t=32) topk cluster preds:  0.57963556 0.8724028319120407 0.99995565
+
+Finished loading data for target 6888. Now merging
+()
+()
+Target assay predicted logits:  0.92685515
+Target cluster 1 active logit:  0.27114642
+Processing samples for 8838 w/ Cluster id: 1 and Assay cols: tensor([2])
+Generating fps...
+Removed 2657 duplicates
+RND topk tsim to target:  0.08673478871171494 0.1076923076923077 0.3018867924528302
+RND full tsim to target:  0.07907150333314128 0.10416666666666667 0.3018867924528302
+RND topk assay preds:  0.11212122 0.15308330208063126 0.9553264
+RND topk cluster preds:  0.49308917 0.745574414730072 0.99983835
+
+Generating fps...
+Removed 1 duplicates
+GFN(t=32) topk tsim to target:  0.07306605391247607 0.09090909090909091 0.3142857142857143
+GFN(t=32) full tsim to target:  0.07222259779908935 0.08955223880597014 0.3142857142857143
+GFN(t=32) topk assay preds:  0.087169826 0.11664379201829433 0.78472173
+GFN(t=32) topk cluster preds:  0.3810099 0.5840849131345749 0.99916804
+
+Finished loading data for target 8838. Now merging
+(2,)
+()
+Target assay predicted logits:  [0.9700744  0.93544585]
+Target cluster 1 active logit:  0.7761084
+Processing samples for 10075 w/ Cluster id: 1 and Assay cols: tensor([32, 34])
+Generating fps...
+Removed 2707 duplicates
+RND topk tsim to target:  0.07811371320697906 0.10714285714285714 0.325
+RND full tsim to target:  0.05884431819918796 0.09230769230769231 0.325
+RND topk assay preds:  0.29119244 0.42102528363466263 0.99733186
+RND topk cluster preds:  0.4871745 0.7260183840990067 0.9993831
+
+Generating fps...
+Removed 602 duplicates
+GFN(t=32) topk tsim to target:  0.09123231401372804 0.10606060606060606 0.22
+GFN(t=32) full tsim to target:  0.09108666255186526 0.10909090909090909 0.2608695652173913
+GFN(t=32) topk assay preds:  0.37143075 0.5195289105176926 0.9916602
+GFN(t=32) topk cluster preds:  0.2997315 0.43124569952487946 0.9940865
+
+Finished loading data for target 10075. Now merging
+()
+()
+Target assay predicted logits:  0.9229617
+Target cluster 9 active logit:  0.7533787
+Processing samples for 13905 w/ Cluster id: 9 and Assay cols: tensor([2])
+Generating fps...
+Removed 2617 duplicates
+RND topk tsim to target:  0.07683090999885406 0.09433962264150944 0.2413793103448276
+RND full tsim to target:  0.06373402282807045 0.08571428571428572 0.2413793103448276
+RND topk assay preds:  0.09637002 0.12565147504210472 0.94429207
+RND topk cluster preds:  0.07310515 0.08921239338815212 0.9397753
+
+Generating fps...
+Removed 0 duplicates
+GFN(t=32) topk tsim to target:  0.080094295502292 0.08928571428571429 0.225
+GFN(t=32) full tsim to target:  0.07859578775835034 0.08823529411764706 0.225
+GFN(t=32) topk assay preds:  0.05360255 0.06345495581626892 0.7063833
+GFN(t=32) topk cluster preds:  0.039997853 0.044474306516349316 0.89778554
+
+Finished loading data for target 13905. Now merging
+dict_keys(['RND', 'GFN(t=32)'])
+Producing plots for aggregated targets under mode morph...
+smis
+rewards
+tsim_to_target
+top_k_reward_idx
+top_k_reward_tsim_to_target
+top_k_reward_assay_preds
+top_k_reward_cluster_preds
+full_rewards
+full_tsim_to_target
+Binning rewards into 15 bins between 0.16802525520324707 and 0.9530786275863647: 
+Bins: [0.16802526 0.2241005  0.28017574 0.33625098 0.39232622 0.44840146
+ 0.5044767  0.56055194 0.61662718 0.67270242 0.72877766 0.7848529
+ 0.84092815 0.89700339 0.95307863]
+Sampling 1000 samples per method per bin
+Binning tsim_to_target into 15 bins between 0.0 and 0.6222222222222222: 
+Bins: [0.         0.04444444 0.08888889 0.13333333 0.17777778 0.22222222
+ 0.26666667 0.31111111 0.35555556 0.4        0.44444444 0.48888889
+ 0.53333333 0.57777778 0.62222222]
+Sampling 1000 samples per method per bin
+Binning rewards into 15 bins between 0.16802525520324707 and 0.9530786275863647: 
+Bins: [0.16802526 0.2241005  0.28017574 0.33625098 0.39232622 0.44840146
+ 0.5044767  0.56055194 0.61662718 0.67270242 0.72877766 0.7848529
+ 0.84092815 0.89700339 0.95307863]
+Sampling 1000 samples per method per bin
+Binning tsim_to_target into 15 bins between 0.0 and 0.6222222222222222: 
+Bins: [0.         0.04444444 0.08888889 0.13333333 0.17777778 0.22222222
+ 0.26666667 0.31111111 0.35555556 0.4        0.44444444 0.48888889
+ 0.53333333 0.57777778 0.62222222]
+Sampling 1000 samples per method per bin
