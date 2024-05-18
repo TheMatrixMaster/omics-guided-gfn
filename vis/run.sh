@@ -32,4 +32,23 @@ export HYDRA_FULL_ERROR=1
 # Start the job
 # python /home/mila/s/stephen.lu/gfn_gene/vis/infer.py
 # python /home/mila/s/stephen.lu/gfn_gene/vis/main.py
-python /home/mila/s/stephen.lu/gfn_gene/vis/aggr.py
+# python /home/mila/s/stephen.lu/gfn_gene/vis/aggr.py
+
+# python aggr.py --config_name cluster_morph.json --plot_individual --norm --run_name cluster-morph --save_dir /home/mila/s/stephen.lu/scratch/final_plots --max_k 2000 --num_samples 20000 --ignore_targets 8949,9476 --focus cluster
+# python aggr.py --config_name cluster_joint.json --plot_individual --norm --run_name cluster-joint --save_dir /home/mila/s/stephen.lu/scratch/final_plots --max_k 2000 --num_samples 20000 --target_mode joint --ignore_targets 8949,9476
+# python aggr.py --config_name assay_morph.json --plot_individual --run_name assay-morph --save_dir /home/mila/s/stephen.lu/scratch/final_plots --max_k 2000 --num_samples 20000 --assay_cutoff 0.0 --ignore_targets 8636,12662,15575 --focus assay
+
+# python aggr.py --config_name assay_morph.json --plot_individual --run_name assay-morph --save_dir /home/mila/s/stephen.lu/scratch/final_plots --max_k 2000 --num_samples 20000 --assay_cutoff 0.0 --ignore_targets 8636,12662,15575 --focus assay
+# python aggr.py --config_name cluster_morph_hi.json --plot_individual --norm --run_name cluster-morph-hi --save_dir /home/mila/s/stephen.lu/scratch/final_plots --max_k 2000 --num_samples 20000 --ignore_targets 8949,9476 --focus cluster
+
+# python aggr.py --config_name assay_morph.json --plot_individual --run_name assay-morph --save_dir /home/mila/s/stephen.lu/scratch/pdf_plots --max_k 1000 --num_samples 10000 --assay_cutoff 0.0 --ignore_targets 8636,12662,15575 --focus assay --sim_thresh 0.4
+# python aggr.py --config_name assay_joint.json --plot_individual --run_name assay-joint --save_dir /home/mila/s/stephen.lu/scratch/pdf_plots --max_k 1000 --num_samples 10000 --assay_cutoff 0.0 --ignore_targets 8636,12662,15575 --focus assay --sim_thresh 0.4 --target_mode joint
+
+# python aggr.py --config_name cluster_morph.json --plot_individual --run_name cluster-morph --save_dir /home/mila/s/stephen.lu/scratch/pdf_plots --max_k 1000 --num_samples 10000 --ignore_targets 8949,9476 --focus cluster --sim_thresh 0.4
+# python aggr.py --config_name cluster_morph_hi.json --plot_individual --run_name cluster-morph --save_dir /home/mila/s/stephen.lu/scratch/pdf_plots --max_k 1000 --num_samples 10000 --ignore_targets 8949,9476 --focus cluster --sim_thresh 0.4
+# python aggr.py --config_name cluster_joint.json --plot_individual --run_name cluster-joint --save_dir /home/mila/s/stephen.lu/scratch/pdf_plots --max_k 1000 --num_samples 10000 --ignore_targets 8949,9476 --focus cluster --sim_thresh 0.4 --target_mode joint
+
+# python aggr2.py --config_name assay_morph.json --plot_individual --run_name assay-morph --save_dir /home/mila/s/stephen.lu/scratch/pdf_plots --sim_thresh 0.3 --keep-every 8
+# python aggr2.py --config_name assay_joint.json --plot_individual --run_name assay-joint --save_dir /home/mila/s/stephen.lu/scratch/pdf_plots --sim_thresh 0.3 --keep-every 8
+# python aggr2.py --config_name cluster_morph.json --plot_individual --run_name cluster-morph --save_dir /home/mila/s/stephen.lu/scratch/pdf_plots --sim_thresh 0.3 --keep-every 8
+python aggr2.py --config_name cluster_joint.json --plot_individual --run_name cluster-joint --save_dir /home/mila/s/stephen.lu/scratch/pdf_plots --sim_thresh 0.3 --keep-every 8

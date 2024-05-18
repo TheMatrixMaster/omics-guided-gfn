@@ -83,7 +83,8 @@ def load_mmc_model(cfg):
 def load_assay_pred_model(use_gneprop=False):
     gneprop_ckpt = '/home/mila/s/stephen.lu/gfn_gene/res/mmc/models/gneprop_assay_2.ckpt'
     if use_gneprop: return gneprop_ckpt
-    ckpt = '/home/mila/s/stephen.lu/gfn_gene/res/mmc/models/puma_assay_epoch=139.ckpt'
+    # ckpt = '/home/mila/s/stephen.lu/gfn_gene/res/mmc/models/puma_assay_epoch=139.ckpt'
+    ckpt = '/home/mila/s/stephen.lu/gfn_gene/res/mmc/models/puma_assay_epoch=144.ckpt'
     model = MultiTask_FP_PL.load_from_checkpoint(ckpt, map_location=device)
     model.eval()
     return model.to(device)
@@ -118,9 +119,10 @@ def sqlite_load(root, columns, num_workers=8, upto=None, begin=0):
         bar = tqdm(smoothing=0)
         values = defaultdict(lambda: [[] for i in range(num_workers)])
         for i in range(num_workers):
-            con = sqlite3.connect(
-                f"file:{root}generated_mols_{i}.db?mode=ro", uri=True, timeout=6
-            )
+            filename = f"{root}generated_mols_{i}.db"
+            if not os.path.exists(filename):
+                filename = f"{root}generated_objs_{i}.db"
+            con = sqlite3.connect(f"file:{filename}?mode=ro", uri=True, timeout=6)
             cur = con.cursor()
             cur.execute("pragma mmap_size = 134217728")
             cur.execute("pragma cache_size = -1024000;")
@@ -167,7 +169,7 @@ def get_fp_from_base64_or_bit_array(fp):
     return get_fp_from_bit_array(fp)
 
 def load_datum_from_run(run_dir, run_id, remove_duplicates=True, save_fps=True,
-                        load_fps=True, fps_from_file=True, last_k=None):
+                        load_fps=True, fps_from_file=True, last_k=None, every_k=None):
     run_path = os.path.join(run_dir, run_id)
     if not os.path.exists(run_path):
         print(f"Run {run_id} does not exist")
@@ -186,6 +188,10 @@ def load_datum_from_run(run_dir, run_id, remove_duplicates=True, save_fps=True,
 
     if last_k:
         smis, rewards = smis[-last_k:], rewards[-last_k:]
+    
+    if every_k:
+        # Only keep every k-th element
+        smis, rewards = smis[::every_k], rewards[::every_k]
 
     if os.path.exists(fps_file) and fps_from_file:
         fps = np.load(fps_file)
@@ -249,13 +255,13 @@ def predict_assay_logits_from_smi(run_path, smis, assay_model, target_active_ass
             np.save(f"{run_path}/assay_preds.npy", logit_values)
             print(f"Saved assay preds to {run_path}/assay_preds.npy")
     if target_active_assay_cols == None or use_gneprop:
-        return y_hat
+        return y_hat.reshape(1, -1)
     target_active_assay_cols = target_active_assay_cols.tolist()\
         if torch.is_tensor(target_active_assay_cols) else target_active_assay_cols
     if y_hat.ndim == 1:
-        logit_values = y_hat[target_active_assay_cols]
+        logit_values = y_hat[target_active_assay_cols].reshape(1, -1)
     else:
-        logit_values = y_hat[:, target_active_assay_cols].squeeze()
+        logit_values = y_hat[:, target_active_assay_cols].T
     print(logit_values.shape)
     return logit_values
 
@@ -376,7 +382,7 @@ def num_modes_over_trajs(run_datum, rew_thresh=0.9, sim_thresh=0.7, batch_size=6
 
 def num_modes_lazy(run_datum, rew_thresh=0.9, sim_thresh=0.7, bs=64):
     fpgen = rdFingerprintGenerator.GetMorganGenerator(radius=2,fpSize=2048)
-    rewards, smis, mols = run_datum['rewards'], run_datum['smis'], run_datum['mols']
+    rewards, smis = run_datum['rewards'], run_datum['smis']
     fps = run_datum['fps'] if 'fps' in run_datum else None
     num_traj = len(rewards) // bs
     num_modes_in_each_traj, modes_fps = np.zeros(num_traj), []
@@ -384,9 +390,13 @@ def num_modes_lazy(run_datum, rew_thresh=0.9, sim_thresh=0.7, bs=64):
     for i in tqdm(range(num_traj)):
         start, end = i * bs, (i + 1) * bs
         avg_rew_per_traj[i] = np.mean(rewards[start:end])
-        for j, (r, smi, mol) in enumerate(zip(rewards[start:end], smis[start:end], mols[start:end])):
+        for j, (r, smi) in enumerate(zip(rewards[start:end], smis[start:end])):
             if r < rew_thresh: continue
-            fp = fps[start:end][j] if fps is not None else fpgen.GetFingerprint(mol)
+            if fps is not None:
+                fp = fps[start:end][j]
+            else:
+                mol = Chem.MolFromSmiles(smi)
+                fpgen.GetFingerprint(mol)
             if is_new_mode(modes_fps, fp, sim_threshold=sim_thresh):
                 modes_fps.append(fp)
                 num_modes_in_each_traj[i] += 1
@@ -415,11 +425,12 @@ def load_target_from_path(target_path, mmc_model=None, target_mode="morph"):
     target_reward = cosine_similarity(struct_latent, target_latent)[0][0]
     return target_smi, target_fp, struct_latent, morph_latent, joint_latent, target_reward
     
-def pool_datum(runs_datum, avoid_keys=None):
+def pool_datum(runs_datum, avoid_runs=None, keep_keys=[]):
     pooled_datum = {'pooled': {}}
     for run_name, run_datum in runs_datum.items():
-        if run_name in avoid_keys: continue
+        if run_name in avoid_runs: continue
         for key, value in run_datum.items():
+            if key not in keep_keys: continue
             if key not in pooled_datum['pooled']:
                 pooled_datum['pooled'][key] = value
             elif type(value) == list:
