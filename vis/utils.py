@@ -168,6 +168,22 @@ def get_fp_from_base64_or_bit_array(fp):
         return get_fp_from_base64(fp)
     return get_fp_from_bit_array(fp)
 
+def minmax_norm_datum(runs_datum, cols=[]):
+    """Min-max normalize the datum"""
+    col_vals = {}
+    for _, run_datum in runs_datum.items():
+        for col in cols:
+            if col not in col_vals: col_vals[col] = []
+            if col in run_datum: col_vals[col].extend(run_datum[col])
+    for col in cols:
+        col_vals[col] = np.array(col_vals[col])
+        col_vals[col] = (col_vals[col] - np.min(col_vals[col])) / (np.max(col_vals[col]) - np.min(col_vals[col]))
+        for _, run_datum in runs_datum.items():
+            if col not in run_datum: continue
+            run_datum[col] = col_vals[col][:len(run_datum[col])]
+            col_vals[col] = col_vals[col][len(run_datum[col]):]
+    return runs_datum
+
 def load_datum_from_run(run_dir, run_id, remove_duplicates=True, save_fps=True,
                         load_fps=True, fps_from_file=True, last_k=None, every_k=None):
     run_path = os.path.join(run_dir, run_id)
@@ -380,27 +396,27 @@ def num_modes_over_trajs(run_datum, rew_thresh=0.9, sim_thresh=0.7, batch_size=6
     num_scafs_overall = np.cumsum(num_unique_scafs)
     return num_modes_overall, num_scafs_overall
 
-def num_modes_lazy(run_datum, rew_thresh=0.9, sim_thresh=0.7, bs=64):
+def num_modes_lazy(run_datum, rew_thresh=0.9, sim_thresh=0.7, bs=64, return_smis=False):
     fpgen = rdFingerprintGenerator.GetMorganGenerator(radius=2,fpSize=2048)
     rewards, smis = run_datum['rewards'], run_datum['smis']
     fps = run_datum['fps'] if 'fps' in run_datum else None
     num_traj = len(rewards) // bs
-    num_modes_in_each_traj, modes_fps = np.zeros(num_traj), []
+    num_modes_in_each_traj, modes_fps, modes_smi = np.zeros(num_traj), [], []
     avg_rew_per_traj = np.zeros(num_traj)
     for i in tqdm(range(num_traj)):
         start, end = i * bs, (i + 1) * bs
         avg_rew_per_traj[i] = np.mean(rewards[start:end])
         for j, (r, smi) in enumerate(zip(rewards[start:end], smis[start:end])):
             if r < rew_thresh: continue
-            if fps is not None:
-                fp = fps[start:end][j]
-            else:
-                mol = Chem.MolFromSmiles(smi)
-                fpgen.GetFingerprint(mol)
+            if fps is not None: fp = fps[start:end][j]
+            else: fpgen.GetFingerprint(Chem.MolFromSmiles(smi))
             if is_new_mode(modes_fps, fp, sim_threshold=sim_thresh):
                 modes_fps.append(fp)
+                modes_smi.append(smi)
                 num_modes_in_each_traj[i] += 1
     num_modes_overall = np.cumsum(num_modes_in_each_traj)
+    if return_smis:
+        return num_modes_overall, avg_rew_per_traj, modes_smi
     return num_modes_overall, avg_rew_per_traj
 
 def load_target_from_path(target_path, mmc_model=None, target_mode="morph"):

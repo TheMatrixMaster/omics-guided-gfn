@@ -12,15 +12,16 @@ from plotting import *
 import json
 
 def compute_rew_thresh(run, n=5000, percentile=90):
-    runs_datum_sm = load_run(run, num_samples=n)
+    runs_datum_sm, _ = load_run(run, num_samples=n)
     merged_rewards = []
     for run_name, run_datum in runs_datum_sm.items():
         merged_rewards.append(run_datum["rewards"])
     merged_rewards = np.hstack(merged_rewards)
     return round(np.percentile(merged_rewards, percentile), 2)
 
-def load_run(run, num_samples=None, every_k=None):
+def load_run(run, num_samples=None, every_k=None, check_len=False):
     # Load baseline data for runs
+    should_skip_run = False
     run_paths = run["run_paths"]
     runs_datum = {}
     for run_name, run_id in run_paths.items():
@@ -30,8 +31,13 @@ def load_run(run, num_samples=None, every_k=None):
         # Create run_datum object with duplicates
         run_datum = { "smis": full_smis, "rewards": full_rewards, "fps": full_fps }
         assert len(full_smis) == len(full_rewards) == len(full_fps)
-        runs_datum[run_name] = run_datum
-    return runs_datum
+        
+        if check_len and len(full_smis) != (640000/every_k):
+            # should_skip_run = True
+            continue
+        else:
+            runs_datum[run_name] = run_datum
+    return runs_datum, should_skip_run
 
 def compute_num_modes(runs_datum, rew_thresh):
     res = {}
@@ -39,6 +45,15 @@ def compute_num_modes(runs_datum, rew_thresh):
         num_modes, avg_rew = num_modes_lazy(run_datum, rew_thresh, SIM_THRESH, bs=64//KEEP_EVERY)
         print(f"Run {run_name} has {num_modes[-1]} modes with average reward {avg_rew[-1]}")
         res[run_name] = { "num_modes": num_modes, "avg_rew": avg_rew }
+    return res
+
+def get_modes_smis(run_datum, rew_thresh):
+    res = {}
+    for run_name, run_datum in runs_datum.items():
+        num_modes, avg_rew, modes_smis = num_modes_lazy(run_datum, rew_thresh, SIM_THRESH, 
+                                            bs=64//KEEP_EVERY, return_smis=True)
+        print(f"Run {run_name} has {num_modes[-1]} modes with average reward {avg_rew[-1]}")
+        res[run_name] = { "modes_smis": modes_smis }
     return res
 
 def merge(runs_datum, joint_datum, keys_to_keep=[]):
@@ -92,6 +107,7 @@ if __name__ == "__main__":
     parser.add_argument("--sim_thresh", type=float, default=0.7, help="Similarity threshold for mode finding")
     parser.add_argument("--keep-every", type=int, default=8, help="Keep every k samples from the run")
     parser.add_argument("--save_memory", action="store_true", help="Save memory by not storing all runs")
+    parser.add_argument("--save_modes", action="store_true", help="Save modes SMILES")
 
     args = parser.parse_args()
     RUN_NAME = args.run_name
@@ -116,13 +132,21 @@ if __name__ == "__main__":
         rew_thresh = compute_rew_thresh(run, percentile=90)
         print(f"Computed reward threshold for {target_idx} as {rew_thresh}")
 
-        runs_datum = load_run(run, every_k=KEEP_EVERY)
-
-        if runs_datum is None: continue
+        runs_datum, should_skip = load_run(run, every_k=KEEP_EVERY, check_len=True)
+        if runs_datum is None or should_skip:
+            print(f"Skipping {target_idx} due to missing data")
+            continue
         else: NUM_RUNS += 1
 
-        result: dict = compute_num_modes(runs_datum, rew_thresh)
         save_dir = f"{SAVEDIR}/{target_idx}-{RUN_NAME}"
+        os.makedirs(save_dir, exist_ok=True)
+
+        if args.save_modes:
+            result = get_modes_smis(runs_datum, rew_thresh)
+            np.save(f"{save_dir}/modes_smis.npy", result)
+            continue
+        else:
+            result = compute_num_modes(runs_datum, rew_thresh)
 
         if args.plot_individual:
             go(result, 1, target_idx=target_idx, rew_thresh=rew_thresh, save_dir=save_dir)

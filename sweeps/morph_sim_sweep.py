@@ -10,7 +10,7 @@ from gflownet.tasks.morph_frag import MorphSimilarityTrainer
 TIME = time.strftime("%m-%d-%H-%M")
 ENTITY = "thematrixmaster"
 PROJECT = "omics-guided-gfn"
-SWEEP_NAME = f"{TIME}-cluster-targets-TB-higher-temp"
+SWEEP_NAME = f"{TIME}-targets-save-me"
 STORAGE_DIR = f"/home/mila/s/stephen.lu/scratch/gfn_gene/wandb_sweeps/{SWEEP_NAME}"
 
 
@@ -29,9 +29,9 @@ sweep_config = {
         # "config.algo.tb.Z_lr_decay": {"values": [2_000, 50_000]},
         # "config.algo.sampling_tau": {"values": [0.0, 0.95, 0.99]},
         # "config.algo.train_random_action_prob": {"values": [0.01]},
-        "config.cond.temperature.dist_params": {
-          "values": [[128.0], [256.0], [512.0]]
-        },
+        # "config.cond.temperature.dist_params": {
+        #   "values": [[128.0], [256.0], [512.0]]
+        # },
         # "config.replay.capacity": {"values": [5000, 10000]},
         # "config.replay.num_from_replay": {"values": [32, 64]},
         # "config.task.morph_sim.reduced_frag": {"values": [True, False]},
