@@ -3,4 +3,4 @@
 	url = https://github.com/TheMatrixMaster/gflownet.git
 [submodule "multimodal_contrastive"]
 	path = multimodal_contrastive
-	url = https://gitlab.com/ritalu0722/multimodal_contrastive.git
+	url = https://github.com/TheMatrixMaster/mmc-gene.git

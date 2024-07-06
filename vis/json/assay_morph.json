@@ -1,0 +1,82 @@
+[
+    {
+        "target_idx": 10075,
+        "reward_thresh": 0.95,
+        "run_paths": {
+            "RND": "05-16-06-40-new-assay-targets-all/balmy-sweep-21-id-vms7fkj8",
+            "GFN": "05-16-06-09-new-assay-targets-all/eager-sweep-5-id-5sj3icit",
+            "SAC": "05-16-06-55-new-assay-targets-all/smart-sweep-53-id-g2x7d89c",
+            "SQL": "05-16-06-40-new-assay-targets-all/morning-sweep-37-id-zqulxalp"
+        }
+    },
+    {
+        "target_idx": 10816,
+        "reward_thresh": 0.95,
+        "run_paths": {
+            "RND": "05-16-06-40-new-assay-targets-all/neat-sweep-22-id-a6hqoq41",
+            "GFN": "05-16-06-09-new-assay-targets-all/summer-sweep-6-id-db45ktbl",
+            "SAC": "05-16-06-55-new-assay-targets-all/rare-sweep-54-id-dzk5gslo",
+            "SQL": "05-16-06-40-new-assay-targets-all/scarlet-sweep-38-id-ifa02bqy"
+        }
+    },
+    {
+        "target_idx": 12662,
+        "reward_thresh": 0.95,
+        "run_paths": {
+            "RND": "05-16-06-40-new-assay-targets-all/ruby-sweep-23-id-ca52ffc1",
+            "GFN": "05-16-06-09-new-assay-targets-all/sparkling-sweep-7-id-qxko3wh7",
+            "SAC": "05-16-06-55-new-assay-targets-all/gentle-sweep-55-id-7uqv67u5",
+            "SQL": "05-16-06-40-new-assay-targets-all/generous-sweep-39-id-mamzdip9"
+        }
+    },
+    {
+        "target_idx": 15575,
+        "reward_thresh": 0.95,
+        "run_paths": {
+            "RND": "05-16-06-40-new-assay-targets-all/fluent-sweep-24-id-ff8gwrs0",
+            "GFN": "05-16-06-09-new-assay-targets-all/colorful-sweep-8-id-fkm7k7zn",
+            "SAC": "05-16-06-55-new-assay-targets-all/spring-sweep-56-id-8cswaxu8",
+            "SQL": "05-16-06-40-new-assay-targets-all/leafy-sweep-40-id-pr30unyp"
+        }
+    },
+    {
+        "target_idx": 2288,
+        "reward_thresh": 0.95,
+        "run_paths": {
+            "RND": "05-16-06-19-new-assay-targets-all/wobbly-sweep-17-id-3qp7k7ah",
+            "GFN": "05-16-06-09-new-assay-targets-all/proud-sweep-1-id-nshn5fcc",
+            "SAC": "05-16-06-49-new-assay-targets-all/visionary-sweep-49-id-37inb8y8",
+            "SQL": "05-16-06-40-new-assay-targets-all/proud-sweep-33-id-iaxsmovm"
+        }
+    },
+    {
+        "target_idx": 4646,
+        "reward_thresh": 0.95,
+        "run_paths": {
+            "RND": "05-16-06-28-new-assay-targets-all/dulcet-sweep-18-id-sddfs0iv",
+            "GFN": "05-16-06-09-new-assay-targets-all/legendary-sweep-2-id-62zocm19",
+            "SAC": "05-16-06-52-new-assay-targets-all/hopeful-sweep-50-id-4v2aq9he",
+            "SQL": "05-16-06-40-new-assay-targets-all/ancient-sweep-34-id-ylyn69yn"
+        }
+    },
+    {
+        "target_idx": 8505,
+        "reward_thresh": 0.95,
+        "run_paths": {
+            "RND": "05-16-06-28-new-assay-targets-all/eager-sweep-19-id-6z5k8id7",
+            "GFN": "05-16-06-09-new-assay-targets-all/worldly-sweep-3-id-z9eooazf",
+            "SAC": "05-16-06-52-new-assay-targets-all/absurd-sweep-51-id-y2ypusja",
+            "SQL": "05-16-06-40-new-assay-targets-all/apricot-sweep-35-id-ve1vo9la"
+        }
+    },
+    {
+        "target_idx": 8636,
+        "reward_thresh": 0.95,
+        "run_paths": {
+            "RND": "05-16-06-31-new-assay-targets-all/stellar-sweep-20-id-3v1ihi87",
+            "GFN": "05-16-06-09-new-assay-targets-all/peach-sweep-4-id-xpm5om83",
+            "SAC": "05-16-06-52-new-assay-targets-all/visionary-sweep-52-id-go0va065",
+            "SQL": "05-16-06-40-new-assay-targets-all/balmy-sweep-36-id-364biuf5"
+        }
+    }
+]

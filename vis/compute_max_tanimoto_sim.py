@@ -18,7 +18,7 @@ def load_run(run):
     runs_datum = {}
     for run_name, run_id in run_paths.items():
         full_fps, _, _ = load_datum_from_run(RUNDIR, run_id, remove_duplicates=False, 
-                                             fps_from_file=False, save_fps=False, last_k=10000)
+                                             fps_from_file=False, save_fps=False, last_k=NUM_SAMPLES)
         full_tsim_to_target = np.array(AllChem.DataStructs.BulkTanimotoSimilarity(target_fp, full_fps))
         runs_datum[run_name] = np.max(full_tsim_to_target)
         print(f"{run_name} has max tanimoto similarity to target {np.max(full_tsim_to_target)}")
@@ -32,11 +32,13 @@ if __name__ == "__main__":
     parser.add_argument("--config_name", type=str, default="cluster_morph.json", help="JSON config to use")
     parser.add_argument("--ignore_targets", type=str, default="", help="Comma-separated list of targets to ignore")
     parser.add_argument("--run_dir", type=str, default="/home/mila/s/stephen.lu/scratch/gfn_gene/wandb_sweeps", help="Run directory for runs")
+    parser.add_argument("--num_samples", type=int, default=10000, help="Number of samples to load from each run")
 
     args = parser.parse_args()
     CONFIG_NAME = args.config_name
     IGNORE_TARGETS = args.ignore_targets.split(",")
     RUNDIR = args.run_dir
+    NUM_SAMPLES = args.num_samples
     
     # Load runs from JSON config
     with open(f"json/{CONFIG_NAME}") as f:

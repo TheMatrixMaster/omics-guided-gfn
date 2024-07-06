@@ -1,0 +1,138 @@
+[
+    {
+        "target_idx": 8505,
+        "reward_thresh": 0.95,
+        "run_paths": {
+            "Joint": "05-16-06-40-new-assay-targets-all/sweet-sweep-27-id-jcrytwte",
+            "Morph": "05-16-06-09-new-assay-targets-all/worldly-sweep-3-id-z9eooazf"
+        }
+    },   
+    {
+        "target_idx": 338,
+        "reward_thresh": 0.95,
+        "run_paths": {
+            "Joint": "04-30-02-01-morph-sim-run-random-baselines/eternal-sweep-11-id-4b0tyvig",
+            "Morph": "05-10-09-28-morph-only-high-temp/peach-sweep-11-id-g94wrmy1"
+        }
+    },
+    {
+        "target_idx": 2288,
+        "reward_thresh": 0.95,
+        "run_paths": {
+            "Joint": "05-16-06-40-new-assay-targets-all/giddy-sweep-25-id-n5fymw0h",
+            "Morph": "05-16-06-09-new-assay-targets-all/proud-sweep-1-id-nshn5fcc"   
+        }
+    },
+    {
+        "target_idx": 4646,
+        "reward_thresh": 0.95,
+        "run_paths": {
+            "Joint": "05-16-06-40-new-assay-targets-all/driven-sweep-26-id-ls30teou",
+            "Morph": "05-16-06-09-new-assay-targets-all/legendary-sweep-2-id-62zocm19"
+        }
+    },
+    {
+        "target_idx": 8636,
+        "reward_thresh": 0.95,
+        "run_paths": {
+            "Joint": "05-16-06-40-new-assay-targets-all/worldly-sweep-28-id-dquw0ryn",
+            "Morph": "05-16-06-09-new-assay-targets-all/peach-sweep-4-id-xpm5om83"
+        }
+    },
+    {
+        "target_idx": 10075,
+        "reward_thresh": 0.95,
+        "run_paths": {
+            "Joint": "05-16-06-40-new-assay-targets-all/stellar-sweep-29-id-iw0jb0sg",
+            "Morph": "05-16-06-09-new-assay-targets-all/eager-sweep-5-id-5sj3icit"
+        }
+    },
+    {
+        "target_idx": 10816,
+        "reward_thresh": 0.95,
+        "run_paths": {
+            "Joint": "05-16-06-40-new-assay-targets-all/solar-sweep-30-id-reg99jmi",
+            "Morph": "05-16-06-09-new-assay-targets-all/summer-sweep-6-id-db45ktbl"
+        }
+    },
+    {
+        "target_idx": 12662,
+        "reward_thresh": 0.95,
+        "run_paths": {
+            "Joint": "05-16-06-40-new-assay-targets-all/twilight-sweep-31-id-4acf47tk",
+            "Morph": "05-16-06-09-new-assay-targets-all/sparkling-sweep-7-id-qxko3wh7"
+        }
+    },
+    {
+        "target_idx": 15575,
+        "reward_thresh": 0.95,
+        "run_paths": {
+            "Joint": "05-16-06-40-new-assay-targets-all/fragrant-sweep-32-id-e7omk050",
+            "Morph": "05-16-06-09-new-assay-targets-all/colorful-sweep-8-id-fkm7k7zn"
+        }
+    },
+    {
+        "target_idx": 8949,
+        "reward_thresh": 0.95,
+        "run_paths": {
+            "Joint": "04-30-02-01-morph-sim-run-random-baselines/rare-sweep-12-id-tjpfzaom",
+            "Morph": "05-10-09-37-morph-only-high-temp/worthy-sweep-12-id-zlbaec4n"
+        }
+    },
+    {
+        "target_idx": 9476,
+        "reward_thresh": 0.95,
+        "run_paths": {
+            "Joint": "04-30-02-21-morph-sim-run-random-baselines/silver-sweep-16-id-inmd5k39",
+            "Morph": "05-10-09-46-morph-only-high-temp/zesty-sweep-16-id-c1hgknn0"
+        }
+    },
+    {
+        "target_idx": 9300,
+        "reward_thresh": 0.95,
+        "run_paths": {
+            "Joint": "04-30-02-07-morph-sim-run-random-baselines/fearless-sweep-14-id-7qn32tnf",
+            "Morph": "05-10-09-46-morph-only-high-temp/tough-sweep-14-id-fr5sgueu"
+        }
+    },
+    {
+        "target_idx": 9445,
+        "reward_thresh": 0.95,
+        "run_paths": {
+            "Joint": "04-30-02-07-morph-sim-run-random-baselines/tough-sweep-15-id-bppa91l0",
+            "Morph": "05-10-09-46-morph-only-high-temp/colorful-sweep-15-id-feziuwdm"
+        }
+    },
+    {
+        "target_idx": 12071,
+        "reward_thresh": 0.95,
+        "run_paths": {
+            "Joint": "04-30-02-22-morph-sim-run-random-baselines/dry-sweep-17-id-6q1sa0cc",   
+            "Morph": "05-10-09-49-morph-only-high-temp/silver-sweep-17-id-ztchg1a5"
+        }
+    },
+    {
+        "target_idx": 4331,
+        "reward_thresh": 0.95,
+        "run_paths": {
+            "Joint": "04-30-02-01-morph-sim-run-random-baselines/sandy-sweep-9-id-tccku4hz",
+            "Morph": "05-10-09-19-morph-only-high-temp/amber-sweep-9-id-5pmogr11"
+        }
+    },
+    {
+        "target_idx": 8206,
+        "reward_thresh": 0.95,
+        "run_paths": {
+            "Joint": "04-30-02-01-morph-sim-run-random-baselines/unique-sweep-10-id-jkfvu24j",
+            "Morph": "05-10-09-28-morph-only-high-temp/sandy-sweep-10-id-0hrmfeu9"
+        }
+    },
+    {
+        "target_idx": 9277,
+        "reward_thresh": 0.95,
+        "run_paths": {
+            "Joint": "04-30-02-02-morph-sim-run-random-baselines/divine-sweep-13-id-xr16ullm",
+            "Morph": "05-10-09-46-morph-only-high-temp/mild-sweep-13-id-p3p21oxa"
+        }
+    }
+]

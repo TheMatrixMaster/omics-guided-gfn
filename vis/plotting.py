@@ -1,5 +1,5 @@
 """
-Script to perform actual plotting
+Methods for plotting results
 """
 from utils import *
 from umap import umap_ as umap
@@ -20,9 +20,11 @@ run_name_to_color = {
 hue_palette = sns.color_palette(list(run_name_to_color.values()))
 hue_order = run_name_to_color.keys()
 
+
 def smooth(x, n=100):
   idx = np.int32(np.linspace(0, n-1e-3, len(x)))
   return np.linspace(0, len(x), n), np.bincount(idx, weights=x)/np.bincount(idx)
+
 
 def smooth_ci(lo, hi, n=100):
   assert len(lo) == len(hi)
@@ -182,6 +184,7 @@ def plot_umap_from_runs_datum(runs_datum, target_fp=None, target_rew=None, n_nei
     fig3.savefig(save_path.replace(".pdf", "_modes_tsim.pdf"), dpi=300)
     fig4.savefig(save_path.replace(".pdf", "_rew_tsim.pdf"), dpi=300)
 
+
 def plot_modes_over_trajs(runs_datum, nruns, target_idx=None, is_joint=False, rew_thresh=None,
                           sim_thresh=0.7, n=2000, ignore=[], save_path="num_modes_over_trajs.pdf"):
     fig1, ax1 = plt.subplots(figsize=(6.75, 4.5))
@@ -226,6 +229,7 @@ def plot_modes_over_trajs(runs_datum, nruns, target_idx=None, is_joint=False, re
     fig1.savefig(save_path.replace(".pdf", "_modes.pdf"), dpi=300)
     fig2.savefig(save_path.replace(".pdf", "_rew.pdf"), dpi=300)
 
+
 def plot_tsim_between_modes_and_to_target(runs_datum, k1=10000, k2=1000, bins=50, is_joint=False,
                                           ignore=[], save_path="tanimoto_sim_hist.pdf"):
     fig1, ax1 = plt.subplots(figsize=(6.75, 4.5))
@@ -254,6 +258,7 @@ def plot_tsim_between_modes_and_to_target(runs_datum, k1=10000, k2=1000, bins=50
     plt.tight_layout()
     fig1.savefig(save_path.replace(".pdf", "_tsim_to_target.pdf"), dpi=300)
     fig2.savefig(save_path.replace(".pdf", "_tsim_between_modes.pdf"), dpi=300)
+
 
 def plot_tsim_and_reward_full_hist(runs_datum, bins=50, rew_key="rewards", sim_key="tsim_to_target", 
                                    is_joint=False, ignore=[], save_path="tsim_and_reward_hist.pdf"):
@@ -286,6 +291,7 @@ def plot_tsim_and_reward_full_hist(runs_datum, bins=50, rew_key="rewards", sim_k
     plt.tight_layout()
     fig1.savefig(save_path.replace(".pdf", "_tsim.pdf"), dpi=300)
     fig2.savefig(save_path.replace(".pdf", "_rew.pdf"), dpi=300)
+
 
 def plot_pooled_boxplot_sim_and_rew(runs_datum, nbins1=15, nbins2=15, nsamples1=1000, nsamples2=1000, ignore=[], save_path="pooled_boxplot_sim_rew.pdf"):
     pooled_datum = pool_datum(runs_datum, avoid_runs=ignore, keep_keys=['rewards', 'tsim_to_target'])
@@ -334,6 +340,7 @@ def plot_pooled_boxplot_sim_and_rew(runs_datum, nbins1=15, nbins2=15, nsamples1=
     fig1.savefig(save_path.replace(".pdf", "_rew.pdf"), dpi=300)
     fig2.savefig(save_path.replace(".pdf", "_sim.pdf"), dpi=300)
 
+
 def get_preds_for_bin(subdict, assay_model, assay_cols, cluster_model, cluster_id, use_gneprop=False):
     assert "smis" in subdict.keys()
     subdict["assay_preds"] = predict_assay_logits_from_smi(None, subdict["smis"], assay_model,
@@ -341,6 +348,7 @@ def get_preds_for_bin(subdict, assay_model, assay_cols, cluster_model, cluster_i
     subdict["cluster_preds"] = predict_cluster_logits_from_smi(None, subdict["smis"], cluster_model,
                                 cluster_id, save_preds=False, use_gneprop=use_gneprop, verbose=False)
     return subdict
+
 
 def plot_unpooled_boxplot_sim_and_rew(runs_datum, bins1=10, bins2=10, n1=2000, n2=1000, ignore=[],
                                  save_path="unpooled_boxplot_sim_rew.pdf"):
@@ -392,6 +400,7 @@ def plot_unpooled_boxplot_sim_and_rew(runs_datum, bins1=10, bins2=10, n1=2000, n
     plt.tight_layout()
     fig1.savefig(save_path.replace(".pdf", "_rew.pdf"), dpi=300)
     fig2.savefig(save_path.replace(".pdf", "_sim.pdf"), dpi=300)
+
 
 def plot_unpooled_boxplot_oracle(runs_datum, bins1=10, bins2=10, n1=2000, n2=1000, ignore=[],
                                  save_path="unpooled_boxplot_oracle.pdf", **kwargs):
@@ -462,6 +471,7 @@ def plot_unpooled_boxplot_oracle(runs_datum, bins1=10, bins2=10, n1=2000, n2=100
     fig3.savefig(save_path.replace(".pdf", "_cluster_rew.pdf"), dpi=300)
     fig4.savefig(save_path.replace(".pdf", "_cluster_sim.pdf"), dpi=300)
 
+
 def plot_preds_boxplot(runs_datum, key, ignore=[], hue_order=None):
     fig, ax = plt.subplots(figsize=(6.75, 4.5))
     df = pd.DataFrame()
@@ -475,6 +485,7 @@ def plot_preds_boxplot(runs_datum, key, ignore=[], hue_order=None):
     hue_order = hue_order if hue_order != None else list(runs_datum.keys())
     sns.boxplot(x="method", y="value", hue="method", data=df, ax=ax, hue_order=hue_order)
     return fig, ax
+
 
 def plot_cluster_preds_hist(runs_datum, cluster_id=None, k=10000, bins=50, is_joint=False,
                             ignore=[], plot_all=True, save_path="cluster_preds_hist.pdf"):
@@ -524,6 +535,7 @@ def plot_cluster_preds_hist(runs_datum, cluster_id=None, k=10000, bins=50, is_jo
     fig1.savefig(save_path.replace(".pdf", "_rew.pdf"), dpi=300)
     fig2.savefig(save_path.replace(".pdf", "_mod.pdf"), dpi=300)
     fig3.savefig(save_path.replace(".pdf", "_sim.pdf"), dpi=300)
+
 
 def plot_assay_preds_hist(runs_datum, assay_cols=[], k=10000, bins=50, is_joint=False,
                           ignore=[], plot_all=True, save_path="assay_cluster_preds_hist.pdf"):

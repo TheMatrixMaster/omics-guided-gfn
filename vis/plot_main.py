@@ -268,72 +268,20 @@ def go(joint_datum, num_runs, target_fp=None, target_rew=None,
        assay_cols=None, cluster_id=None, save_dir=None, is_joint=False):
     plot_format = "pdf"
     os.makedirs(save_dir, exist_ok=True)
-    # PLOTS THAT REQUIRE DUPLICATES OVER THE ENTIRE TRAINING SAMPLES
-    # plot_modes_over_trajs(joint_datum, rew_thresh=rew_thresh, sim_thresh=0.7, bs=bs, ignore=["PUMA_test"], 
-    #                     save_path=f"{save_dir}/num_modes_{rew_thresh}.{plot_format}")
-    # plot_tsim_and_reward_full_hist(joint_datum, bins=50, is_joint=True,
-    #                                rew_key="full_rewards", sim_key="full_tsim_to_target",
-    #                                save_path=f"{save_dir}/full_tsim_reward_hist.{plot_format}")
     
-    # PLOTS THAT REQUIRE DUPLICATES REMOVED
-    if FOCUS == "cluster":
-        fig, ax = plot_preds_boxplot(joint_datum, "num_high_cluster_preds_by_rew")
-        ax.set_title(f"Number of Aggregated Cluster Predictions ≥ {CLUSTER_PRED_THRESH} in\ntop 1000 Highest Reward Samples per Target")
-        ax.set_xlabel("Method")
-        ax.set_ylabel("Count")
-        fig.savefig(f"{save_dir}/num_high_cluster_preds_by_rew.{plot_format}", bbox_inches="tight")
-
-        fig, ax = plot_preds_boxplot(joint_datum, "num_high_cluster_preds_by_modes")
-        ax.set_title(f"Number of Aggregated Cluster Predictions ≥ {CLUSTER_PRED_THRESH} in\ntop 1000 Modes per Target")
-        ax.set_xlabel("Method")
-        ax.set_ylabel("Count")
-        fig.savefig(f"{save_dir}/num_high_cluster_preds_by_modes.{plot_format}", bbox_inches="tight")
-
-        # plot_cluster_preds_hist(joint_datum, cluster_id=cluster_id, is_joint=is_joint, 
-        #                         k=MAX_K*num_runs, bins=50, ignore=["PUMA_test"],
-        #                         save_path=f"{save_dir}/cluster_preds_hist.{plot_format}")
-    elif FOCUS == "assay":
-        fig, ax = plot_preds_boxplot(joint_datum, "num_high_assay_preds_by_rew", hue_order=["Joint", "Morph"])
-        ax.set_title(f"Number of Aggregated High Assay Predictions ≥ {ASSAY_PRED_THRESH} in\ntop 1000 Highest Reward Samples per Target")
-        ax.set_xlabel("Method")
-        ax.set_ylabel("Count")
-        fig.savefig(f"{save_dir}/num_high_assay_preds_by_rew.{plot_format}", bbox_inches="tight")
-
-        fig, ax = plot_preds_boxplot(joint_datum, "num_high_assay_preds_by_modes", hue_order=["Joint", "Morph"])
-        ax.set_title(f"Number of Aggregated High Assay Predictions ≥ {ASSAY_PRED_THRESH} in\ntop 1000 Modes per Target")
-        ax.set_xlabel("Method")
-        ax.set_ylabel("Count")
-        fig.savefig(f"{save_dir}/num_high_assay_preds_by_modes.{plot_format}", bbox_inches="tight")
-
-    elif FOCUS == "tsim":
-        fig, ax = plot_preds_boxplot(joint_datum, "num_high_sim_to_target_lastk", hue_order=["Joint", "Morph"])
-        ax.set_title(f"Number of Samples with Tanimoto Similarity to Target ≥ {SIM_TO_TARGET_THRESH}\nin Last 10000 Samples per Target")
-        ax.set_xlabel("Method")
-        ax.set_ylabel("Count")
-        fig.savefig(f"{save_dir}/num_high_sim_to_target_topk_rew.{plot_format}", bbox_inches="tight")
-        
-        # fig, ax = plot_preds_boxplot(joint_datum, "num_high_sim_to_target_topk_modes", hue_order=["Joint", "Morph"])
-        # ax.set_title(f"Number of Samples with Tanimoto Similarity to Target ≥ {SIM_TO_TARGET_THRESH} in\ntop 1000 Modes per Target")
-        # ax.set_xlabel("Method")
-        # ax.set_ylabel("Count")
-        # fig.savefig(f"{save_dir}/num_high_sim_to_target_topk_modes.{plot_format}", bbox_inches="tight")
-
-        # plot_assay_preds_hist(joint_datum, assay_cols=assay_cols, is_joint=is_joint, 
-        #                       k=MAX_K*num_runs, bins=50, ignore=["PUMA_test"],
-        #                       save_path=f"{save_dir}/assay_cluster_preds_hist.{plot_format}")
+    plot_tsim_and_reward_full_hist(joint_datum, bins=50, is_joint=True,
+                                   rew_key="full_rewards", sim_key="full_tsim_to_target",
+                                   save_path=f"{save_dir}/full_tsim_reward_hist.{plot_format}")
+    plot_tsim_between_modes_and_to_target(joint_datum, is_joint=is_joint, 
+                                          k1=MAX_K*num_runs, k2=100, bins=50, 
+                                          save_path=f"{save_dir}/tsim_modes_hist.{plot_format}")
     
-    # plot_tsim_between_modes_and_to_target(joint_datum, is_joint=is_joint, 
-    #                                       k1=MAX_K*num_runs, k2=100, bins=50, 
-    #                                       save_path=f"{save_dir}/tsim_modes_hist.{plot_format}")
-    # if is_joint:
-    #     plot_pooled_boxplot_sim_and_rew(joint_datum, nbins1=15, nbins2=15, nsamples1=1000, nsamples2=1000,
-    #                                     save_path=f"{save_dir}/pooled_boxplot_sim_rew.{plot_format}")
-    #     plot_unpooled_boxplot_sim_and_rew(joint_datum, bins1=15, bins2=15, n1=1000, n2=1000, ignore=[],
-    #                                     save_path=f"{save_dir}/unpooled_boxplot_sim_rew.{plot_format}")
-    # if target_fp != None:
-    #     plot_umap_from_runs_datum(joint_datum, target_fp, target_rew, n_neigh=30,
-    #                               k=MAX_K, ignore=["PUMA_test"],
-    #                               save_path=f"{save_dir}/umap.{plot_format}")
+    if is_joint:
+        plot_pooled_boxplot_sim_and_rew(joint_datum, nbins1=15, nbins2=15, nsamples1=1000, nsamples2=1000,
+                                        save_path=f"{save_dir}/pooled_boxplot_sim_rew.{plot_format}")
+        plot_unpooled_boxplot_sim_and_rew(joint_datum, bins1=15, bins2=15, n1=1000, n2=1000, ignore=[],
+                                        save_path=f"{save_dir}/unpooled_boxplot_sim_rew.{plot_format}")
+
     
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

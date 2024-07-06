@@ -1,10 +1,7 @@
 # Omics-Guided GflowNets
 
 ## Description
-This repository contains the code to run the experiments and visualize the results highlighted in the Omics-Guided GflowNets project.
-
-## Overview
-Our codebase builds on top of a fork of the public [recursion gflownet](https://github.com/recursionpharma/gflownet) repo which provides the environment setup to run the gflownet framework on graph domains.
+This repository contains the code to run the experiments and visualize the results in the [Cell Morphology-Guided Small Molecule Generation with GFlowNets]() paper. Our codebase builds on top of a fork of the public [recursion gflownet](https://github.com/recursionpharma/gflownet) repo which provides the environment setup to run the gflownet framework on graph domains. We also use a second submodule for training multimodal contrastive learning models (GMC, CLIP) which we use to derive a reward signal for the GFlowNets. See the paper for more details. Please contact the [authors](mailto:stephen.lu@mila.quebec) for further information.
 
 ## Setup
 To setup the project, first create a conda environment with `python=3.10`
@@ -13,36 +10,41 @@ conda create -n <env_name> python=3.10
 conda activate <env_name>
 ```
 
-Then, install the gflownet package from local source:
+Then, pull the submodules and install them accordingly.
+
 ```bash
+git submodule update --init --recursive --remote
+
+# For the gflownet submodule, run
 cd gflownet
-git submodule update --init
 pip install -e . --find-links https://data.pyg.org/whl/torch-2.1.2+cu121.html
+
+# For the gmc submodule, run
+cd multimodal_contrastive
+pip install -r requirements.txt
+pip install -e .
 ```
 
-or follow the guideline from the public [recursion gflownet](https://github.com/TheMatrixMaster/gflownet) repo
-
 ## Usage
-The current project supports the following:
+The current project supports training GFlowNets or any of the baselines in the paper (SAC, SQL, Random) from scratch and reproducing the plots in the paper. The instructions for each are detailed below.
 
 ### Training from scratch
-Our setup is made to support jobs running with the Slurm workload manager. To train a mixture policy from scratch, you must first edit the `utils/template.sh` file to customize the Slurm executable script to your GPU environment. Next, to generate the executables for a given job, simply edit the hyperparameters in the main function of `gen.py` and run the file from the project root directory:
+Before training, you must download a checkpoint for our reward GMC model and target profiles from our [google drive](). The GMC checkpoint is used to derive the reward signal for the GFlowNets. The target profiles contain an associated morphological and structural profile that we want to optimize for in either the `morph` or `joint` training settings. Refer to the paper for more details.
 
-#### Example
-First, select the [task] on which you'd like to train the network.
-Next, set the hyperparameters in the `gen.py` file by following the [Config](https://github.com/TheMatrixMaster/gflownet/blob/trunk/src/gflownet/config.py) specification.
+To train a model from scratch, you may choose to either run the training script directly or run a sweep with wandb. To run the training script directly, modify the hyperparameters at the bottom of the `gflownet/src/gflownet/tasks/morph_frag.py` script and run it directly from the command line.
 
-For every hyperparameter combination you specified, the script will generate a corresponding run folder at `jobs/<current_date>/<run_id-current_time>`. This folder will contain the following files:
+To run a sweep, please edit the sweep parameters in `sweeps/morph_sim_sweep.py`, then follow the instructions in the `sweeps/README.md` to launch the sweep. We use slurm to launch jobs and have provided shell script under `sweeps/` to do so, but it should be rather simple to modify these to run on your setup.
 
-- `run.sh`: the Slurm executable script for the job
-- `run.py`: the main executable script for the job
-- `howto.txt`: a text file containing the command to submit the job to slurm
-- `config.json`: a json file containing the full Config object for the job
-- `run_object.json`: a json file containing the class instance of the run object, which can be used to re-instantiate the run object for downstream analysis and plotting
+For both methods, you will need to specify the path to the GMC checkpoint and target profiles that you downloaded earlier.
 
-To submit the job to slurm, simply run the command specified in `howto.txt` from the run config directory. For example, if the command is `sbatch --array=0-4 run.sh config`, then run the following:
+### Plotting
+Plots requires that you download the training trajectories from our [drive]() or that you train your own models from scratch. For detailed instructions on reproducing the plots in our paper, please refer to `vis/README.md`.
 
-```bash
-cd jobs/<current_date>/<run_id-current_time>
-sbatch --array=0-4 run.sh config
+## Citation
+If you use this codebase in your research, please cite the following paper:
+```
+@article{lu2022cell,
+  title={Cell Morphology-Guided Small Molecule Generation with GFlowNets},
+  author={Lu, Stephen}
+}
 ```

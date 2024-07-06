@@ -27,4 +27,4 @@ unset __conda_setup
 module --force purge
 conda activate gfn
 
-python /home/mila/s/stephen.lu/gfn_gene/gflownet/src/gflownet/tasks/morph_frag.py
+python ../gflownet/src/gflownet/tasks/morph_frag.py
