@@ -18,6 +18,11 @@ Given that our plots often group multiple individual runs (ex: to compare GFlowN
 ## Setup
 After downloading both the training runs [folder](https://drive.google.com/drive/folders/1CFY9YHJsGGDYggwI7TCJhlssZDe_CuZK?usp=sharing) and the training targets [folder](https://drive.google.com/drive/folders/1q-YqF2F7cvnK4Mr_thmI_CKRDYvjHLRs?usp=sharing) from the drive, please update and source the `env.sh` script in this directory with the paths to these two folders on your machine.
 
+```bash
+export RUNS_DIR_PATH="path.to/runs"
+export TARGETS_DIR_PATH="path.to/targets"
+```
+
 ## Number of Modes over Trajectories
 To plot the number of modes over trajectories, you can run the following command. This will plot the number of modes over trajectories for each method aggregated across all targets in the joint training setting. The `--sim_thresh` flag specifies the similarity threshold used to determine what constitutes a unique mode. The `--keep-every 8` flag indicates that we should only consider every 8th trajectory in the `.db` file to save on computation time. 
 ```bash
@@ -71,4 +76,4 @@ python compute_max_tanimoto_sim.py --config_name all_morph.json --num_samples 10
 ```
 
 #### GMC Latent Space Visualization
-The latent space visualization for the multimodal contrastive model (GMC) are produced in the `../notebooks/evaluate_mmc.ipynb` notebook. The notebook has imports from the `multimodal` submodule, which you can install by following the instructions in the main `README.md` file. Further, the notebook loads a pre-trained model checkpoint which you can download [here]() from our google drive.
+The latent space visualization for the multimodal contrastive model (GMC) are produced in the `../notebooks/evaluate_mmc.ipynb` notebook. The notebook has imports from the `multimodal` submodule, which you can install by following the instructions in the main `README.md` file.
