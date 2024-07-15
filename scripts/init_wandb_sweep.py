@@ -8,16 +8,16 @@ from gflownet.config import Config, init_empty, TBVariant
 from gflownet.tasks.morph_frag import MorphSimilarityTrainer
 
 TIME = time.strftime("%m-%d-%H-%M")
-ENTITY = "thematrixmaster"
+ENTITY = "your.wandb.entity"
 PROJECT = "omics-guided-gfn"
-SWEEP_NAME = f"{TIME}-targets-save-me"
-STORAGE_DIR = f"/home/mila/s/stephen.lu/scratch/gfn_gene/wandb_sweeps/{SWEEP_NAME}"
+SWEEP_NAME = f"{TIME}-morph-sim"
+STORAGE_DIR = f"~/wandb_sweeps/{SWEEP_NAME}"
 
 
 # Define the search space of the sweep
 sweep_config = {
     "name": SWEEP_NAME,
-    "program": "morph_sim_sweep.py",
+    "program": "init_wandb_sweep.py",
     "controller": {
         "type": "cloud",
     },
@@ -39,35 +39,35 @@ sweep_config = {
         "config.task.morph_sim.target_path": {
             "values": [
                 # Old Assay based targets
-                # "6~/home/mila/s/stephen.lu/gfn_gene/res/mmc/targets/sample_39.pkl",
-                # "4~/home/mila/s/stephen.lu/gfn_gene/res/mmc/targets/sample_903.pkl",
-                # "6~/home/mila/s/stephen.lu/gfn_gene/res/mmc/targets/sample_1847.pkl",
-                # "5~/home/mila/s/stephen.lu/gfn_gene/res/mmc/targets/sample_2288.pkl",
-                # "7~/home/mila/s/stephen.lu/gfn_gene/res/mmc/targets/sample_6888.pkl",
-                # "6~/home/mila/s/stephen.lu/gfn_gene/res/mmc/targets/sample_8838.pkl",
-                # "4~/home/mila/s/stephen.lu/gfn_gene/res/mmc/targets/sample_10075.pkl",
-                # "7~/home/mila/s/stephen.lu/gfn_gene/res/mmc/targets/sample_13905.pkl",
+                "6~/path.to.targets/sample_39.pkl",
+                "4~/path.to.targets/sample_903.pkl",
+                "6~/path.to.targets/sample_1847.pkl",
+                "5~/path.to.targets/sample_2288.pkl",
+                "7~/path.to.targets/sample_6888.pkl",
+                "6~/path.to.targets/sample_8838.pkl",
+                "4~/path.to.targets/sample_10075.pkl",
+                "7~/path.to.targets/sample_13905.pkl",
 
-                # New Assay based targets
-                # "5~/home/mila/s/stephen.lu/gfn_gene/res/mmc/targets/sample_2288.pkl",
-                # "7~/home/mila/s/stephen.lu/gfn_gene/res/mmc/targets/sample_4646.pkl",
-                # "5~/home/mila/s/stephen.lu/gfn_gene/res/mmc/targets/sample_8505.pkl",
-                # "4~/home/mila/s/stephen.lu/gfn_gene/res/mmc/targets/sample_8636.pkl",
-                # "4~/home/mila/s/stephen.lu/gfn_gene/res/mmc/targets/sample_10075.pkl",
-                # "7~/home/mila/s/stephen.lu/gfn_gene/res/mmc/targets/sample_10816.pkl",
-                # "7~/home/mila/s/stephen.lu/gfn_gene/res/mmc/targets/sample_12662.pkl",
-                # "5~/home/mila/s/stephen.lu/gfn_gene/res/mmc/targets/sample_15575.pkl",
+                New Assay based targets
+                "5~/path.to.targets/sample_2288.pkl",
+                "7~/path.to.targets/sample_4646.pkl",
+                "5~/path.to.targets/sample_8505.pkl",
+                "4~/path.to.targets/sample_8636.pkl",
+                "4~/path.to.targets/sample_10075.pkl",
+                "7~/path.to.targets/sample_10816.pkl",
+                "7~/path.to.targets/sample_12662.pkl",
+                "5~/path.to.targets/sample_15575.pkl",
 
                 # Cluster based targets
-                "7~/home/mila/s/stephen.lu/gfn_gene/res/mmc/targets/sample_4331.pkl",
-                "7~/home/mila/s/stephen.lu/gfn_gene/res/mmc/targets/sample_8206.pkl",
-                "4~/home/mila/s/stephen.lu/gfn_gene/res/mmc/targets/sample_338.pkl",
-                "6~/home/mila/s/stephen.lu/gfn_gene/res/mmc/targets/sample_8949.pkl",
-                "5~/home/mila/s/stephen.lu/gfn_gene/res/mmc/targets/sample_9277.pkl",
-                "7~/home/mila/s/stephen.lu/gfn_gene/res/mmc/targets/sample_9300.pkl",
-                "6~/home/mila/s/stephen.lu/gfn_gene/res/mmc/targets/sample_9445.pkl",
-                "7~/home/mila/s/stephen.lu/gfn_gene/res/mmc/targets/sample_9476.pkl",
-                "5~/home/mila/s/stephen.lu/gfn_gene/res/mmc/targets/sample_12071.pkl",
+                "7~/path.to.targets/sample_4331.pkl",
+                "7~/path.to.targets/sample_8206.pkl",
+                "4~/path.to.targets/sample_338.pkl",
+                "6~/path.to.targets/sample_8949.pkl",
+                "5~/path.to.targets/sample_9277.pkl",
+                "7~/path.to.targets/sample_9300.pkl",
+                "6~/path.to.targets/sample_9445.pkl",
+                "7~/path.to.targets/sample_9476.pkl",
+                "5~/path.to.targets/sample_12071.pkl",
             ]
         },
         # "config.task.morph_sim.target_mode": {"values": ["morph", "joint"]},
@@ -109,15 +109,10 @@ def wandb_config_merger():
 
     # task specific hyperparameters
     config.task.morph_sim.target_path = (
-        "/home/mila/s/stephen.lu/gfn_gene/res/mmc/targets/sample_10852.pkl"
+        "/path.to.targets/sample_10852.pkl"
     )
-    config.task.morph_sim.proxy_path = (
-        # "/home/mila/s/stephen.lu/gfn_gene/res/mmc/morph_struct.ckpt"
-        "/home/mila/s/stephen.lu/gfn_gene/res/mmc/models/epoch=72-step=7738.ckpt"
-    )
-    config.task.morph_sim.config_dir = (
-        "/home/mila/s/stephen.lu/gfn_gene/multimodal_contrastive/configs"
-    )
+    config.task.morph_sim.proxy_path = "path.to/gmc_proxy.ckpt"
+    config.task.morph_sim.config_dir = "../multimodal_contrastive/configs"
     config.task.morph_sim.config_name = "puma_sm_gmc.yaml"
     config.task.morph_sim.reduced_frag = False
     config.task.morph_sim.target_mode = "morph"

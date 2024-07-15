@@ -1,15 +1,9 @@
-"""
-This script produces all the relevant aggregate plots for gfn analysis by combining datum
-across multiple targets
-
-Usage:
-python aggr.py --plot_individual --target_mode morph --config_name cluster_morph.json --run_name cluster-morph --ignore_targets PUMA_test --save_dir /home/mila/s/stephen.lu/scratch/plots --run_dir /home/mila/s/stephen.lu/scratch/gfn_gene/wandb_sweeps --sim_thresh 0.7
-"""
-
+import os
 import argparse
 from utils import *
 from plotting import *
 import json
+
 
 def compute_rew_thresh(run, n=5000, percentile=90):
     runs_datum_sm, _ = load_run(run, num_samples=n)
@@ -102,8 +96,8 @@ if __name__ == "__main__":
     parser.add_argument("--config_name", type=str, default="cluster_morph.json", help="JSON config to use")
     parser.add_argument("--run_name", type=str, default="cluster-morph", help="Run name to use")
     parser.add_argument("--ignore_targets", type=str, default="", help="Comma-separated list of targets to ignore")
-    parser.add_argument("--save_dir", type=str, default="/home/mila/s/stephen.lu/scratch/plots", help="Save directory for plots")
-    parser.add_argument("--run_dir", type=str, default="/home/mila/s/stephen.lu/scratch/gfn_gene/wandb_sweeps", help="Run directory for runs")
+    parser.add_argument("--save_dir", type=str, default="~/plots", help="Save directory for plots")
+    parser.add_argument("--run_dir", type=str, default=os.getenv("RUNS_DIR_PATH"), help="Run directory for runs")
     parser.add_argument("--sim_thresh", type=float, default=0.7, help="Similarity threshold for mode finding")
     parser.add_argument("--keep-every", type=int, default=8, help="Keep every k samples from the run")
     parser.add_argument("--save_memory", action="store_true", help="Save memory by not storing all runs")
@@ -120,7 +114,7 @@ if __name__ == "__main__":
     KEEP_EVERY = args.keep_every
     
     # Load runs from JSON config
-    with open(f"json/{CONFIG_NAME}") as f:
+    with open(f"../runs/{CONFIG_NAME}") as f:
         RUNS = json.load(f)
         
     NUM_RUNS = 0

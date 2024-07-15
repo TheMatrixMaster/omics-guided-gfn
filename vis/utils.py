@@ -63,7 +63,7 @@ def inference_puma(datamodule, cfg):
     return representations
 
 def get_representations():
-    data_dir = "/home/mila/s/stephen.lu/gfn_gene/res/mmc/data"
+    data_dir = "path.to/data_folder"
     try:
         res = np.load(f"{data_dir}/puma_embeddings.npz", allow_pickle=True)
     except FileNotFoundError:
@@ -74,25 +74,20 @@ def get_representations():
 
 def load_mmc_model(cfg):
     # Load model from checkpoint
-    ckpt_path = "/home/mila/s/stephen.lu/gfn_gene/res/mmc/models/epoch=72-step=7738.ckpt"
+    ckpt_path = "path.to/gmc_proxy.ckpt"
     model = utils.instantiate_model(cfg)
     model = model.load_from_checkpoint(ckpt_path, map_location=device)
     model = model.eval()
     return model.to(device)
 
 def load_assay_pred_model(use_gneprop=False):
-    gneprop_ckpt = '/home/mila/s/stephen.lu/gfn_gene/res/mmc/models/gneprop_assay_2.ckpt'
-    if use_gneprop: return gneprop_ckpt
-    # ckpt = '/home/mila/s/stephen.lu/gfn_gene/res/mmc/models/puma_assay_epoch=139.ckpt'
-    ckpt = '/home/mila/s/stephen.lu/gfn_gene/res/mmc/models/puma_assay_epoch=144.ckpt'
+    ckpt = 'path.to/assay_oracle.ckpt'
     model = MultiTask_FP_PL.load_from_checkpoint(ckpt, map_location=device)
     model.eval()
     return model.to(device)
 
 def load_cluster_pred_model(use_gneprop=False):
-    gneprop_ckpt = '/home/mila/s/stephen.lu/gfn_gene/res/mmc/models/gneprop_cluster.ckpt'
-    if use_gneprop: return gneprop_ckpt
-    ckpt = '/home/mila/s/stephen.lu/gfn_gene/res/mmc/models/puma_cluster_epoch=52.ckpt'
+    ckpt = 'path.to/cluster_oracle.ckpt'
     model = MultiTask_FP_PL.load_from_checkpoint(ckpt, map_location=device)
     model.eval() 
     return model.to(device)
@@ -106,12 +101,12 @@ def get_active_assay_cols(dataset, smi):
     return active_cols
 
 def load_assay_matrix_from_csv():
-    data_dir = '/home/mila/s/stephen.lu/scratch/mmc/datasets/'
+    data_dir = 'path.to/data_folder'
     dataset = TestDataset(data_dir + 'assay_matrix_discrete_37_assays_canonical.csv')
     return dataset
 
 def load_cluster_labels_from_csv():
-    data_dir = '/home/mila/s/stephen.lu/scratch/mmc/datasets/'
+    data_dir = 'path.to/data_folder'
     return pd.read_csv(data_dir + 'cluster_matrix.csv', index_col=1)
 
 def sqlite_load(root, columns, num_workers=8, upto=None, begin=0):
@@ -232,7 +227,7 @@ def load_datum_from_run(run_dir, run_id, remove_duplicates=True, save_fps=True,
     return fps, rewards, smis
 
 def load_puma_dataset_fps(smis, save_fps=True, force_recompute=False):
-    data_dir = "/home/mila/s/stephen.lu/gfn_gene/res/mmc/data"
+    data_dir = "path.to/data_folder"
     try:
         if force_recompute: raise FileNotFoundError
         fps = np.load(f"{data_dir}/puma_fingerprints.npy", allow_pickle=True)

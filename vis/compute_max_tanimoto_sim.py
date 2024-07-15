@@ -1,19 +1,15 @@
-"""
-Run RND: 0.3428862681437983 +- 0.06358188963246995
-Run GFN: 0.3805160274280637 +- 0.12720775190446051
-Run SAC: 0.33332204607079313 +- 0.0636978677328406
-Run SQL: 0.3728700323089087 +- 0.08707538096214884
-"""
-
+import os
 import argparse
 from utils import *
 from plotting import *
 import json
 
+TARGET_DIR = os.getenv("TARGETS_DIR_PATH")
+
 
 def load_run(run):
     target_idx, run_paths = run["target_idx"], run["run_paths"]
-    target_sample_path = f"/home/mila/s/stephen.lu/gfn_gene/res/mmc/targets/sample_{target_idx}.pkl"
+    target_sample_path = f"{TARGET_DIR}/sample_{target_idx}.pkl"
     _, target_fp, _, _, _, _ = load_target_from_path(target_sample_path)
     runs_datum = {}
     for run_name, run_id in run_paths.items():
@@ -31,7 +27,7 @@ if __name__ == "__main__":
 
     parser.add_argument("--config_name", type=str, default="cluster_morph.json", help="JSON config to use")
     parser.add_argument("--ignore_targets", type=str, default="", help="Comma-separated list of targets to ignore")
-    parser.add_argument("--run_dir", type=str, default="/home/mila/s/stephen.lu/scratch/gfn_gene/wandb_sweeps", help="Run directory for runs")
+    parser.add_argument("--run_dir", type=str, default=os.getenv("RUNS_DIR_PATH"), help="Run directory for runs")
     parser.add_argument("--num_samples", type=int, default=10000, help="Number of samples to load from each run")
 
     args = parser.parse_args()
@@ -41,7 +37,7 @@ if __name__ == "__main__":
     NUM_SAMPLES = args.num_samples
     
     # Load runs from JSON config
-    with open(f"json/{CONFIG_NAME}") as f:
+    with open(f"../runs/{CONFIG_NAME}") as f:
         RUNS = json.load(f)
         
     NUM_RUNS = 0

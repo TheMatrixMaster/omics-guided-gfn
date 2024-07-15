@@ -1,0 +1,83 @@
+[
+    {
+        "target_idx": 8949,
+        "run_paths": {
+            "RND": "joint/rare-sweep-12-id-tjpfzaom",
+            "GFN": "joint/stilted-sweep-4-id-1nxs27he",
+            "SAC": "joint/neat-sweep-31-id-zbfn61jv",
+            "SQL": "joint/noble-sweep-13-id-24pnz06e"
+        }
+    },
+    {
+        "target_idx": 9476,
+        "run_paths": {
+            "RND": "joint/silver-sweep-16-id-inmd5k39",
+            "GFN": "joint/logical-sweep-8-id-w4za15gf",
+            "SAC": "joint/lyric-sweep-35-id-0p51jnvk",
+            "SQL": "joint/soft-sweep-17-id-jg5ab4no"
+        }
+    },
+    {
+        "target_idx": 9300,
+        "run_paths": {
+            "RND": "joint/fearless-sweep-14-id-7qn32tnf",
+            "GFN": "joint/generous-sweep-6-id-v1dhcb84",
+            "SAC": "joint/polar-sweep-33-id-sn0atdh0",
+            "SQL": "joint/earthy-sweep-15-id-v4engt19"
+        }
+    },
+    {
+        "target_idx": 9445,
+        "run_paths": {
+            "RND": "joint/tough-sweep-15-id-bppa91l0",
+            "GFN": "joint/magic-sweep-7-id-kgydi9zt",
+            "SAC": "joint/electric-sweep-34-id-cm5hjkdg",
+            "SQL": "joint/fiery-sweep-16-id-nmldt1ks"
+        }
+    },
+    {
+        "target_idx": 12071,
+        "run_paths": {
+            "RND": "joint/dry-sweep-17-id-6q1sa0cc",   
+            "GFN": "joint/rosy-sweep-9-id-auoqwf8v",
+            "SAC": "joint/likely-sweep-36-id-29vbvwpb",
+            "SQL": "joint/distinctive-sweep-18-id-7fsl4qvt"
+        }
+    },
+    {
+        "target_idx": 4331,
+        "run_paths": {
+            "RND": "joint/sandy-sweep-9-id-tccku4hz",
+            "GFN": "joint/radiant-sweep-1-id-sbqqhh7b",
+            "SAC": "joint/bright-sweep-28-id-ruxodmdu",
+            "SQL": "joint/efficient-sweep-10-id-b5q4xzkd"
+        }
+    },
+    {
+        "target_idx": 8206,
+        "run_paths": {
+            "RND": "joint/unique-sweep-10-id-jkfvu24j",
+            "GFN": "joint/wise-sweep-2-id-qhnz1u22",
+            "SAC": "joint/visionary-sweep-29-id-j4le7zc5",
+            "SQL": "joint/light-sweep-11-id-lnspu227"
+        }
+    },
+    {
+        "target_idx": 338,
+        "run_paths": {
+            "RND": "joint/eternal-sweep-11-id-4b0tyvig",
+            "GFN": "joint/zany-sweep-3-id-633u751l",
+            "SAC": "joint/dry-sweep-30-id-lbnk43sm",
+            "SQL": "joint/hopeful-sweep-12-id-09ohabxn"
+        }
+    },
+    {
+        "target_idx": 9277,
+        "run_paths": {
+            "RND": "joint/divine-sweep-13-id-xr16ullm",
+            "GFN": "joint/golden-sweep-5-id-9euk5ljb",
+            "SAC": "joint/valiant-sweep-32-id-fsfnw2pb",
+            "SQL": "joint/restful-sweep-14-id-c0x1uzh7"
+        }
+    }
+]

@@ -2,12 +2,21 @@
 
 This directory contains the code needed to generate all the figures in the paper. Apart from the figures involving the multimodal contrastive model, all the other figures involving GFlowNets were produced post-training, using the samples generated during training trajectories. The `gflownet` submodule saves all training trajectories into a `.db` file containing a SMILES string and a float reward for each sample. Our plotting code then references these `.db` files to generate the figures.
 
-To reproduce our results, we've provided `.db` files for the runs we used in the paper. These files are stored in our google drive [folder](https://drive.google.com/drive/folders/1d0dfxwypxfsJaJ-7nHYVBU1QY24V9Hhz?usp=sharing) and must be downloaded to your local machine before running the plotting code.
+To reproduce our results, we've provided `.db` files for the runs we used in the paper. These files are stored under their training run directory in our [google drive](https://drive.google.com/drive/folders/1CFY9YHJsGGDYggwI7TCJhlssZDe_CuZK?usp=sharing) and must be downloaded to your machine to reproduce the figures. Here is the directory structure of a run folder:
 
-Given that our plots often group multiple individual runs (ex: to compare GFlowNet vs. Baselines performance) across multiple `targets`, we provide `.json` config files under the `/json` directory that specify paths to the `.db` files mentioned above. Each config file is an array of objects, where each object specifies the paths to the `.db` files for a particular set of runs with the same `target`. A `target` is a pickle file that contains the structure and morphology data of the target profile that we want to optimize for during training. The set of `targets` we used in the paper must also be downloaded from our google drive.
+```
+run_folder
+├── train.log                   # Training output log
+├── model_state.pt              # Model checkpoint
+├── config.yaml                 # Training configuration
+├── train                       
+│   ├── generated_mols_0.db     # Training samples
+```
+
+Given that our plots often group multiple individual runs (ex: to compare GFlowNet vs. Baselines performance) across multiple `targets`, we provide `.json` config files under the `runs/json` directory that specify paths to the run folders mentioned above. Each config file is an array of objects, where each object specifies the paths to the run directory for a particular set of runs with the same `target`. A `target` is a pickle file that contains the structure and morphology data of the target profile that we want to optimize for during training. The set of `targets` we used in the paper must also be downloaded from our [drive](https://drive.google.com/drive/folders/1CFY9YHJsGGDYggwI7TCJhlssZDe_CuZK?usp=sharing) for plotting.
 
 ## Setup
-After downloading both the training trajectories and targets from the google drive, you can produce the figures by running the appropriate python scripts in this directory.
+After downloading both the training runs [folder](https://drive.google.com/drive/folders/1CFY9YHJsGGDYggwI7TCJhlssZDe_CuZK?usp=sharing) and the training targets [folder](https://drive.google.com/drive/folders/1q-YqF2F7cvnK4Mr_thmI_CKRDYvjHLRs?usp=sharing) from the drive, please update and source the `env.sh` script in this directory with the paths to these two folders on your machine.
 
 ## Number of Modes over Trajectories
 To plot the number of modes over trajectories, you can run the following command. This will plot the number of modes over trajectories for each method aggregated across all targets in the joint training setting. The `--sim_thresh` flag specifies the similarity threshold used to determine what constitutes a unique mode. The `--keep-every 8` flag indicates that we should only consider every 8th trajectory in the `.db` file to save on computation time. 
@@ -61,11 +70,5 @@ To produce the table of max tanimoto similarity to target for each method, we si
 python compute_max_tanimoto_sim.py --config_name all_morph.json --num_samples 10000
 ```
 
-### Additional Figures
 #### GMC Latent Space Visualization
-The latent space visualization for the multimodal contrastive model (GMC) are produced in the `notebooks/evaluate_mmc.ipynb` notebook. The notebook has imports from the `multimodal` submodule, which you can install by following the instructions in the main `README.md` file. Further, the notebook loads a pre-trained model checkpoint which you can download [here]() from our google drive.
-
-#### Sample Generation
-To obtain high reward samples from the GFlowNet, we randomly selected samples from the training trajectories that had a reward greater than a certain threshold. The code to do this is in `notebooks/generate_samples.ipynb` which you may run after downloading the training trajectories and targets from the google drive.
-
-If you want to generate real-tie samples from a trained model, we have an example script that does this with a trained GFlowNet under `notebooks/sample_gflownet.ipynb`. The script needs a pre-trained model checkpoint which you can find on our google drive.
+The latent space visualization for the multimodal contrastive model (GMC) are produced in the `../notebooks/evaluate_mmc.ipynb` notebook. The notebook has imports from the `multimodal` submodule, which you can install by following the instructions in the main `README.md` file. Further, the notebook loads a pre-trained model checkpoint which you can download [here]() from our google drive.

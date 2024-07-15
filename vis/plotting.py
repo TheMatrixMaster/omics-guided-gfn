@@ -1,6 +1,3 @@
-"""
-Methods for plotting results
-"""
 from utils import *
 from umap import umap_ as umap
 import seaborn as sns

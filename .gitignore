@@ -1,13 +1,8 @@
 # Local
-/sweeps
-/gneprop
 /res
-/tmp
 /sweeps/slurm_output_files
 /sweeps/wandb
 *.out
-*.png
-*.pdf
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

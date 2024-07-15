@@ -1,0 +1,75 @@
+[
+    
+    {
+        "target_idx": 2288,
+        "run_paths": {
+            "RND": "joint/giddy-sweep-25-id-n5fymw0h",
+            "SQL": "joint/hearty-sweep-41-id-syhi9by0",
+            "SAC": "joint/young-sweep-57-id-wp6o9ito",
+            "GFN": "joint/desert-sweep-9-id-8g2euid7"
+        }
+    },
+    {
+        "target_idx": 4646,
+        "run_paths": {
+            "RND": "joint/driven-sweep-26-id-ls30teou",
+            "SQL": "joint/rich-sweep-42-id-ytztfu52",
+            "SAC": "joint/giddy-sweep-58-id-b38g66f5",
+            "GFN": "joint/robust-sweep-10-id-49pcicun"
+        }
+    },
+    {
+        "target_idx": 8505,
+        "run_paths": {
+            "RND": "joint/sweet-sweep-27-id-jcrytwte",
+            "SQL": "joint/colorful-sweep-43-id-wgu80815",
+            "SAC": "joint/usual-sweep-59-id-z7jedmry",
+            "GFN": "joint/treasured-sweep-11-id-cx913qdc"
+        }
+    },
+    {
+        "target_idx": 8636,
+        "run_paths": {
+            "RND": "joint/worldly-sweep-28-id-dquw0ryn",
+            "SQL": "joint/usual-sweep-44-id-pr7ojdc2",
+            "SAC": "joint/vibrant-sweep-60-id-gpjobgu3",
+            "GFN": "joint/rural-sweep-12-id-d0gwzgye"
+        }
+    },
+    {
+        "target_idx": 10075,
+        "run_paths": {
+            "RND": "joint/stellar-sweep-29-id-iw0jb0sg",
+            "SQL": "joint/mild-sweep-45-id-8pcujgow",
+            "SAC": "joint/dutiful-sweep-61-id-xet448eu",
+            "GFN": "joint/royal-sweep-13-id-maddeyxz"
+        }
+    },
+    {
+        "target_idx": 10816,
+        "run_paths": {
+            "RND": "joint/solar-sweep-30-id-reg99jmi",
+            "SQL": "joint/vital-sweep-46-id-g4qeptw1",
+            "SAC": "joint/autumn-sweep-62-id-iwvja5o4",
+            "GFN": "joint/restful-sweep-14-id-bxjn6qmv"
+        }
+    },
+    {
+        "target_idx": 12662,
+        "run_paths": {
+            "RND": "joint/twilight-sweep-31-id-4acf47tk",
+            "SQL": "joint/misunderstood-sweep-47-id-8xtcj2z4",
+            "SAC": "joint/iconic-sweep-63-id-rlz67ycp",
+            "GFN": "joint/misunderstood-sweep-15-id-7gna0akg"
+        }
+    },
+    {
+        "target_idx": 15575,
+        "run_paths": {
+            "RND": "joint/fragrant-sweep-32-id-e7omk050",
+            "SQL": "joint/fearless-sweep-48-id-c68vyrl3",
+            "SAC": "joint/rare-sweep-64-id-h5maoou5",
+            "GFN": "joint/trim-sweep-16-id-h2sk1we5"
+        }
+    }
+]

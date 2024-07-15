@@ -1,0 +1,58 @@
+[
+    {
+        "target_idx": 8505,
+        "run_paths": {
+            "Joint": "joint/sweet-sweep-27-id-jcrytwte",
+            "Morph": "morph/worldly-sweep-3-id-z9eooazf"
+        }
+    },
+    {
+        "target_idx": 2288,
+        "run_paths": {
+            "Joint": "joint/giddy-sweep-25-id-n5fymw0h",
+            "Morph": "morph/proud-sweep-1-id-nshn5fcc"   
+        }
+    },
+    {
+        "target_idx": 4646,
+        "run_paths": {
+            "Joint": "joint/driven-sweep-26-id-ls30teou",
+            "Morph": "morph/legendary-sweep-2-id-62zocm19"
+        }
+    },
+    {
+        "target_idx": 8636,
+        "run_paths": {
+            "Joint": "joint/worldly-sweep-28-id-dquw0ryn",
+            "Morph": "morph/peach-sweep-4-id-xpm5om83"
+        }
+    },
+    {
+        "target_idx": 10075,
+        "run_paths": {
+            "Joint": "joint/stellar-sweep-29-id-iw0jb0sg",
+            "Morph": "morph/eager-sweep-5-id-5sj3icit"
+        }
+    },
+    {
+        "target_idx": 10816,
+        "run_paths": {
+            "Joint": "joint/solar-sweep-30-id-reg99jmi",
+            "Morph": "morph/summer-sweep-6-id-db45ktbl"
+        }
+    },
+    {
+        "target_idx": 12662,
+        "run_paths": {
+            "Joint": "joint/twilight-sweep-31-id-4acf47tk",
+            "Morph": "morph/sparkling-sweep-7-id-qxko3wh7"
+        }
+    },
+    {
+        "target_idx": 15575,
+        "run_paths": {
+            "Joint": "joint/fragrant-sweep-32-id-e7omk050",
+            "Morph": "morph/colorful-sweep-8-id-fkm7k7zn"
+        }
+    }
+]

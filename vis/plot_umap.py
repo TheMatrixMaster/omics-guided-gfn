@@ -1,15 +1,10 @@
-"""
-This script produces all the relevant aggregate plots for gfn analysis by combining datum
-across multiple targets
-
-Usage:
-python aggr.py --config_name morph_assay_t=64.json --run_name assay-t=64 --target_mode morph --num_samples 10000 --max_k 5000 --assay_cutoff 0.5 --ignore_targets 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16
-"""
-
+import os
 import argparse
 from utils import *
 from plotting import *
 import json
+
+TARGET_DIR = os.getenv("TARGETS_DIR_PATH")
 
 
 def load_puma():
@@ -24,7 +19,7 @@ def load_puma():
 
 def load_run(run):
     target_idx, run_paths = run["target_idx"], run["run_paths"]
-    target_sample_path = f"/home/mila/s/stephen.lu/gfn_gene/res/mmc/targets/sample_{target_idx}.pkl"
+    target_sample_path = f"{TARGET_DIR}/sample_{target_idx}.pkl"
 
     # Load target fingerprint, smiles, latents, active assay cols (if any)
     target_smi, target_fp, _,_,_, target_reward =\
@@ -115,9 +110,9 @@ if __name__ == "__main__":
     parser.add_argument("--run_name", type=str, default="cluster-morph", help="Run name to use")
     parser.add_argument("--assay_cutoff", type=float, default=0.5, help="Assay cutoff for active cols")
     parser.add_argument("--ignore_targets", type=str, default="", help="Comma-separated list of targets to ignore")
-    parser.add_argument("--save_dir", type=str, default="/home/mila/s/stephen.lu/scratch/plots", help="Save directory for plots")
+    parser.add_argument("--save_dir", type=str, default="~/plots", help="Save directory for plots")
     parser.add_argument("--keep_every", type=int, default=8, help="Keep every k samples from the run")
-    parser.add_argument("--run_dir", type=str, default="/home/mila/s/stephen.lu/scratch/gfn_gene/wandb_sweeps", help="Run directory for runs")
+    parser.add_argument("--run_dir", type=str, default=os.getenv("RUNS_DIR_PATH"), help="Run directory for runs")
     parser.add_argument("--focus", type=str, default="assay", help="Focus on assay or cluster preds")
     parser.add_argument("--sim_thresh", type=float, default=0.7, help="Similarity threshold for mode finding")
 
@@ -137,7 +132,7 @@ if __name__ == "__main__":
     SIM_THRESH = args.sim_thresh
     
     # Load runs from JSON config
-    with open(f"json/{CONFIG_NAME}") as f:
+    with open(f"../runs/{CONFIG_NAME}") as f:
         RUNS = json.load(f)
 
     # Load models and ground truth data

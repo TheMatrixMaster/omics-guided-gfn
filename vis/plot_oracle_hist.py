@@ -1,15 +1,11 @@
-"""
-This script produces all the relevant aggregate plots for gfn analysis by combining datum
-across multiple targets
-
-Usage:
-python aggr.py --config_name morph_assay_t=64.json --run_name assay-t=64 --target_mode morph --num_samples 10000 --max_k 5000 --assay_cutoff 0.5 --ignore_targets 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16
-"""
-
+import os
 import argparse
 from utils import *
 from plotting import *
 import json
+
+TARGET_DIR = os.getenv("TARGETS_DIR_PATH")
+
 
 def load_sm_run(run, num_samples=None, every_k=None):
     # Load baseline data for runs
@@ -25,6 +21,7 @@ def load_sm_run(run, num_samples=None, every_k=None):
         runs_datum[run_name] = run_datum
     return runs_datum
 
+
 def compute_rew_thresh(run, n=5000, percentile=90):
     runs_datum_sm = load_sm_run(run, num_samples=n)
     merged_rewards = []
@@ -32,6 +29,7 @@ def compute_rew_thresh(run, n=5000, percentile=90):
         merged_rewards.append(run_datum["rewards"])
     merged_rewards = np.hstack(merged_rewards)
     return round(np.percentile(merged_rewards, percentile), 2)
+
 
 def load_puma():
     # Load models and ground truth data
@@ -41,6 +39,7 @@ def load_puma():
     cluster_model = load_cluster_pred_model(use_gneprop=USE_GNEPROP)
     mmc_model = None
     return assay_dataset, cluster_labels, assay_model, cluster_model, mmc_model
+
 
 def plot_cluster_preds_hist(runs_datum, cluster_id=None, k=10000, bins=50, is_joint=False,
                             ignore=[], plot_all=True, save_path="cluster_preds_hist.pdf"):
@@ -66,6 +65,7 @@ def plot_cluster_preds_hist(runs_datum, cluster_id=None, k=10000, bins=50, is_jo
     sns.move_legend(ax2, "lower left")
     plt.tight_layout()
     fig2.savefig(save_path.replace(".pdf", "_mod.pdf"), dpi=300)
+
 
 def plot_assay_preds_hist(runs_datum, assay_cols=[], k=10000, bins=50, is_joint=False,
                           ignore=[], plot_all=True, save_path="assay_cluster_preds_hist.pdf"):
@@ -95,9 +95,10 @@ def plot_assay_preds_hist(runs_datum, assay_cols=[], k=10000, bins=50, is_joint=
         plt.tight_layout()
         fig2.savefig(save_path.replace(".pdf", f"_mod_{col}.pdf"), dpi=300)
 
+
 def load_run(run, rew_thresh=None, every_k=8):
     target_idx, run_paths, _ = run["target_idx"], run["run_paths"], run["reward_thresh"]
-    target_sample_path = f"/home/mila/s/stephen.lu/gfn_gene/res/mmc/targets/sample_{target_idx}.pkl"
+    target_sample_path = f"{TARGET_DIR}/sample_{target_idx}.pkl"
 
     # Load target fingerprint, smiles, latents, active assay cols (if any)
     should_plot_assay_preds, should_plot_cluster_preds = True, True
@@ -127,22 +128,15 @@ def load_run(run, rew_thresh=None, every_k=8):
             print(f"Skipping target {target_idx} as it has no active assay cols with pred > 0.5")
             should_plot_assay_preds = False
     
-    # Only keep target cluster cols where the target cluster pred is > 0.01
-    # if target_cluster_id == None or target_active_cluster_pred <= 0.01:
-    #     print(f"Skipping target {target_idx} as it has no active cluster with pred > 0.01")
-    #     should_plot_cluster_preds = False
-
     if FOCUS == "assay": should_plot_cluster_preds = False
     elif FOCUS == "cluster": should_plot_assay_preds = False
         
-    # print(f"Target struct~{TARGET_MODE} alignment: ", target_reward)
     print(f"Processing samples for {target_idx}")
     print(f"Target smi: ", target_smi)
     print(f"Target assay {target_active_assay_cols} predicted logits: ", target_assay_preds)
     print(f"Target cluster {target_cluster_id} active logit: ", target_active_cluster_pred)
     
     # Load baseline data for runs
-    # modes_smis = np.load(f"{save_dir}/modes_smis.npy", allow_pickle=True)
     runs_datum = {}
     for run_name, run_id in run_paths.items():
         full_fps, full_rewards, full_smis = load_datum_from_run(RUNDIR, run_id, remove_duplicates=False,
@@ -152,8 +146,7 @@ def load_run(run, rew_thresh=None, every_k=8):
         num_modes, avg_rew, modes_smis_local = num_modes_lazy(run_datum, rew_thresh, SIM_THRESH, 
                                                         bs=64//every_k, return_smis=True)
         print(f"Run {run_name} has {num_modes[-1]} modes with average reward {avg_rew[-1]}")
-        # modes_smis_local = modes_smis.item()[run_name]["modes_smis"]
-
+        
         # Infer assay and cluster logit predictions
         if not should_plot_assay_preds or len(modes_smis_local) == 0: 
             modes_assay_preds = []
@@ -245,8 +238,8 @@ if __name__ == "__main__":
     parser.add_argument("--run_name", type=str, default="cluster-morph", help="Run name to use")
     parser.add_argument("--assay_cutoff", type=float, default=0.5, help="Assay cutoff for active cols")
     parser.add_argument("--ignore_targets", type=str, default="", help="Comma-separated list of targets to ignore")
-    parser.add_argument("--save_dir", type=str, default="/home/mila/s/stephen.lu/scratch/plots", help="Save directory for plots")
-    parser.add_argument("--run_dir", type=str, default="/home/mila/s/stephen.lu/scratch/gfn_gene/wandb_sweeps", help="Run directory for runs")
+    parser.add_argument("--save_dir", type=str, default="~/plots", help="Save directory for plots")
+    parser.add_argument("--run_dir", type=str, default=os.getenv("RUNS_DIR_PATH"), help="Run directory for runs")
     parser.add_argument("--focus", type=str, default="assay", help="Focus on assay or cluster preds")
     parser.add_argument("--sim_thresh", type=float, default=0.7, help="Similarity threshold for mode finding")
     parser.add_argument("--reward_percentile", type=int, default=90, help="Reward percentile for thresholding")
@@ -266,7 +259,7 @@ if __name__ == "__main__":
     SIM_THRESH = args.sim_thresh
     
     # Load runs from JSON config
-    with open(f"json/{CONFIG_NAME}") as f:
+    with open(f"../runs/{CONFIG_NAME}") as f:
         RUNS = json.load(f)
 
     # Load models and ground truth data

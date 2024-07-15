@@ -1,0 +1,83 @@
+[
+    {
+        "target_idx": 8949,
+        "run_paths": {
+            "RND": "morph/rare-sweep-12-id-tjpfzaom",
+            "SQL": "morph/absurd-sweep-4-id-a9lwftj7",
+            "SAC": "morph/dandy-sweep-22-id-qkxslohm",
+            "GFN": "morph/worthy-sweep-12-id-zlbaec4n"
+        }
+    },
+    {
+        "target_idx": 9476,
+        "run_paths": {
+            "RND": "morph/silver-sweep-16-id-inmd5k39",
+            "SQL": "morph/gallant-sweep-8-id-ito8w2p8",
+            "SAC": "morph/fearless-sweep-26-id-bu5t3ly7",
+            "GFN": "morph/zesty-sweep-16-id-c1hgknn0"
+        }
+    },
+    {
+        "target_idx": 9300,
+        "run_paths": {
+            "RND": "morph/fearless-sweep-14-id-7qn32tnf",
+            "SQL": "morph/usual-sweep-6-id-ttr5dsze",
+            "SAC": "morph/dandy-sweep-24-id-vrvzd8rd",
+            "GFN": "morph/tough-sweep-14-id-fr5sgueu"
+        }
+    },
+    {
+        "target_idx": 9445,
+        "run_paths": {
+            "RND": "morph/tough-sweep-15-id-bppa91l0",
+            "SQL": "morph/faithful-sweep-7-id-2jwbsj3r",
+            "SAC": "morph/eager-sweep-25-id-0qfancis",
+            "GFN": "morph/colorful-sweep-15-id-feziuwdm"
+        }
+    },
+    {
+        "target_idx": 12071,
+        "run_paths": {
+            "RND": "morph/dry-sweep-17-id-6q1sa0cc",   
+            "SQL": "morph/spring-sweep-9-id-y10nvsc3",
+            "SAC": "morph/gallant-sweep-27-id-5y4mgskd",
+            "GFN": "morph/silver-sweep-17-id-ztchg1a5"
+        }
+    },
+    {
+        "target_idx": 4331,
+        "run_paths": {
+            "RND": "morph/sandy-sweep-9-id-tccku4hz",
+            "SQL": "morph/sparkling-sweep-1-id-2x8nyo56",
+            "SAC": "morph/misty-sweep-19-id-6opld5i3",
+            "GFN": "morph/amber-sweep-9-id-5pmogr11"
+        }
+    },
+    {
+        "target_idx": 8206,
+        "run_paths": {
+            "RND": "morph/unique-sweep-10-id-jkfvu24j",
+            "SQL": "morph/happy-sweep-2-id-2xhaodq1",
+            "SAC": "morph/sunny-sweep-20-id-7dhuty8p",
+            "GFN": "morph/sandy-sweep-10-id-0hrmfeu9"
+        }
+    },
+    {
+        "target_idx": 338,
+        "run_paths": {
+            "RND": "morph/eternal-sweep-11-id-4b0tyvig",
+            "SQL": "morph/smooth-sweep-3-id-znr2e6zw",
+            "SAC": "morph/dark-sweep-21-id-cq5g8fb8",
+            "GFN": "morph/peach-sweep-11-id-g94wrmy1"
+        }
+    },
+    {
+        "target_idx": 9277,
+        "run_paths": {
+            "RND": "morph/divine-sweep-13-id-xr16ullm",
+            "SQL": "morph/stoic-sweep-5-id-l34apmnb",
+            "SAC": "morph/rare-sweep-23-id-o5btvcs1",
+            "GFN": "morph/mild-sweep-13-id-p3p21oxa"
+        }
+    }
+]
