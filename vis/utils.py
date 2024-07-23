@@ -24,7 +24,6 @@ from gflownet.models.mmc import mol2graph, to_device
 from sklearn.metrics.pairwise import cosine_similarity
 from pytorch_lightning import LightningDataModule, seed_everything
 
-from gneprop.gneprop_pyg import predict_single
 
 # register custom resolvers if not already registered
 from omegaconf import OmegaConf
@@ -80,13 +79,13 @@ def load_mmc_model(cfg):
     model = model.eval()
     return model.to(device)
 
-def load_assay_pred_model(use_gneprop=False):
+def load_assay_pred_model():
     ckpt = 'path.to/assay_oracle.ckpt'
     model = MultiTask_FP_PL.load_from_checkpoint(ckpt, map_location=device)
     model.eval()
     return model.to(device)
 
-def load_cluster_pred_model(use_gneprop=False):
+def load_cluster_pred_model():
     ckpt = 'path.to/cluster_oracle.ckpt'
     model = MultiTask_FP_PL.load_from_checkpoint(ckpt, map_location=device)
     model.eval() 
@@ -242,7 +241,7 @@ def load_puma_dataset_fps(smis, save_fps=True, force_recompute=False):
     return fps
 
 def predict_assay_logits_from_smi(run_path, smis, assay_model, target_active_assay_cols=None, 
-                                  save_preds=True, force_recompute=False, use_gneprop=False, verbose=True, skip=False):
+                                  save_preds=True, force_recompute=False, verbose=True, skip=False):
     if skip: return None
     try:
         if run_path is None or force_recompute: raise FileNotFoundError
@@ -254,18 +253,17 @@ def predict_assay_logits_from_smi(run_path, smis, assay_model, target_active_ass
         full_df = pd.DataFrame(smis, columns=["SMILES"])
         dataset = TestDataset(full_df, mol_col="SMILES", label_col=None, device=device)
         dataloader = make_eval_data_loader(dataset, batch_size=2048)
-        if use_gneprop:
-            y_hat = predict_single(assay_model, full_df, aggr="none", batch_size=2048).squeeze()
-            print(y_hat.shape)
-        else:
-            y_hat = []
-            for batch in tqdm(dataloader, disable=(not verbose)):
-                y_hat.append(assay_model(batch)[0].detach().cpu().numpy())
-            y_hat = np.vstack(y_hat)
+        
+        y_hat = []
+        for batch in tqdm(dataloader, disable=(not verbose)):
+            y_hat.append(assay_model(batch)[0].detach().cpu().numpy())
+        y_hat = np.vstack(y_hat)
+
         if save_preds:
             np.save(f"{run_path}/assay_preds.npy", logit_values)
             print(f"Saved assay preds to {run_path}/assay_preds.npy")
-    if target_active_assay_cols == None or use_gneprop:
+
+    if target_active_assay_cols == None:
         return y_hat.reshape(1, -1)
     target_active_assay_cols = target_active_assay_cols.tolist()\
         if torch.is_tensor(target_active_assay_cols) else target_active_assay_cols
@@ -277,7 +275,7 @@ def predict_assay_logits_from_smi(run_path, smis, assay_model, target_active_ass
     return logit_values
 
 def predict_cluster_logits_from_smi(run_path, smis, cluster_model, target_cluster_col=None, 
-                                    save_preds=True, force_recompute=False, use_gneprop=False, verbose=True, skip=False):
+                                    save_preds=True, force_recompute=False, verbose=True, skip=False):
     if skip: return None
     try:
         if run_path is None or force_recompute: raise FileNotFoundError
@@ -287,14 +285,12 @@ def predict_cluster_logits_from_smi(run_path, smis, cluster_model, target_cluste
         full_df = pd.DataFrame(smis, columns=["SMILES"])
         dataset = TestDataset(full_df, mol_col="SMILES", label_col=None, device=device)
         dataloader = make_eval_data_loader(dataset, batch_size=2048)
-        if use_gneprop:
-            y_hat = predict_single(cluster_model, full_df, aggr="none", batch_size=2048)
-            print(y_hat.shape)
-        else:
-            y_hat = []
-            for batch in tqdm(dataloader, disable=(not verbose)):
-                y_hat.append(cluster_model(batch)[0].detach().cpu().numpy())
-            y_hat = np.vstack(y_hat)
+      
+        y_hat = []
+        for batch in tqdm(dataloader, disable=(not verbose)):
+            y_hat.append(cluster_model(batch)[0].detach().cpu().numpy())
+        y_hat = np.vstack(y_hat)
+        
         if save_preds:
             np.save(f"{run_path}/cluster_preds.npy", y_hat)
             print(f"Saved cluster preds to {run_path}/cluster_preds.npy")

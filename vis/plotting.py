@@ -338,12 +338,12 @@ def plot_pooled_boxplot_sim_and_rew(runs_datum, nbins1=15, nbins2=15, nsamples1=
     fig2.savefig(save_path.replace(".pdf", "_sim.pdf"), dpi=300)
 
 
-def get_preds_for_bin(subdict, assay_model, assay_cols, cluster_model, cluster_id, use_gneprop=False):
+def get_preds_for_bin(subdict, assay_model, assay_cols, cluster_model, cluster_id):
     assert "smis" in subdict.keys()
     subdict["assay_preds"] = predict_assay_logits_from_smi(None, subdict["smis"], assay_model,
                                 assay_cols, save_preds=False, verbose=False)
     subdict["cluster_preds"] = predict_cluster_logits_from_smi(None, subdict["smis"], cluster_model,
-                                cluster_id, save_preds=False, use_gneprop=use_gneprop, verbose=False)
+                                cluster_id, save_preds=False, verbose=False)
     return subdict
 
 

@@ -11,8 +11,8 @@ def load_puma():
     # Load models and ground truth data
     assay_dataset = load_assay_matrix_from_csv()
     cluster_labels = load_cluster_labels_from_csv()
-    assay_model = load_assay_pred_model(use_gneprop=USE_GNEPROP)
-    cluster_model = load_cluster_pred_model(use_gneprop=USE_GNEPROP)
+    assay_model = load_assay_pred_model()
+    cluster_model = load_cluster_pred_model()
     mmc_model = None
     return assay_dataset, cluster_labels, assay_model, cluster_model, mmc_model
 
@@ -31,18 +31,14 @@ def load_run(run):
     else: target_active_assay_cols = target_active_assay_cols.tolist()
     target_cluster_id = cluster_labels.loc[target_smi]["Activity"]
     
-    target_assay_preds = predict_assay_logits_from_smi(None, [target_smi], assay_model, target_active_assay_cols, save_preds=False, use_gneprop=USE_GNEPROP, skip=(not should_plot_assay_preds))
-    target_active_cluster_pred = predict_cluster_logits_from_smi(None, [target_smi], cluster_model, target_cluster_id, save_preds=False, use_gneprop=USE_GNEPROP, skip=False)
+    target_assay_preds = predict_assay_logits_from_smi(None, [target_smi], assay_model, target_active_assay_cols, save_preds=False, skip=(not should_plot_assay_preds))
+    target_active_cluster_pred = predict_cluster_logits_from_smi(None, [target_smi], cluster_model, target_cluster_id, save_preds=False, skip=False)
     
     # Only keep target active assay cols where the target assay pred is > 0.5
     if should_plot_assay_preds:
         if type(target_active_assay_cols) != list:
             target_active_assay_cols = [target_active_assay_cols]
-        if USE_GNEPROP:
-            if 2 not in target_active_assay_cols:
-                print(f"Skipping target {target_idx} as it has no active assay cols covered by GNEPROP")
-                should_plot_assay_preds = False
-            else: target_active_assay_cols = [2]
+
         if len(target_active_assay_cols) == 1:
             target_active_assay_cols = target_active_assay_cols if target_assay_preds > ASSAY_CUTOFF else []
         elif len(target_active_assay_cols) > 1:
@@ -115,10 +111,10 @@ def load_run(run):
         else:
             top_k_reward_assay_preds = predict_assay_logits_from_smi(
                 None, smis[top_k_reward_idx], assay_model, target_active_assay_cols,
-                force_recompute=True, save_preds=False, use_gneprop=USE_GNEPROP)
+                force_recompute=True, save_preds=False)
             top_k_modes_assay_preds = predict_assay_logits_from_smi(
                 None, smis[top_k_modes_idx], assay_model, target_active_assay_cols,
-                force_recompute=True, save_preds=False, use_gneprop=USE_GNEPROP)
+                force_recompute=True, save_preds=False)
             
             # Count number of high assay preds
             num_high_assay_preds_by_rew = np.sum(top_k_reward_assay_preds >= ASSAY_PRED_THRESH, axis=-1)
@@ -129,10 +125,10 @@ def load_run(run):
         else:
             top_k_reward_cluster_preds = predict_cluster_logits_from_smi(
                 None, smis[top_k_reward_idx], cluster_model, target_cluster_id,
-                force_recompute=True, save_preds=False, use_gneprop=USE_GNEPROP).flatten()
+                force_recompute=True, save_preds=False).flatten()
             top_k_modes_cluster_preds = predict_cluster_logits_from_smi(
                 None, smis[top_k_modes_idx], cluster_model, target_cluster_id,
-                force_recompute=True, save_preds=False, use_gneprop=USE_GNEPROP).flatten()
+                force_recompute=True, save_preds=False).flatten()
             
             num_high_cluster_preds_by_rew = np.sum(top_k_reward_cluster_preds >= CLUSTER_PRED_THRESH)
             num_high_cluster_preds_by_modes = np.sum(top_k_modes_cluster_preds >= CLUSTER_PRED_THRESH)
@@ -211,7 +207,6 @@ if __name__ == "__main__":
 
     parser.add_argument("--norm", action="store_true", help="Normalize assay and cluster predictions")
     parser.add_argument("--plot_individual", action="store_true", help="Plot individual runs")
-    parser.add_argument("--use_gneprop", action="store_true", help="Use GNEPROP for assay preds")
     parser.add_argument("--target_mode", type=str, default="morph", help="Target mode to use")
     parser.add_argument("--config_name", type=str, default="cluster_morph.json", help="JSON config to use")
     parser.add_argument("--num_samples", type=int, default=None, help="Number of samples to use")
@@ -231,7 +226,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     RUN_NAME = args.run_name
     CONFIG_NAME = args.config_name
-    USE_GNEPROP = args.use_gneprop
     TARGET_MODE = args.target_mode
     NUM_SAMPLES = args.num_samples
     MAX_K = args.max_k
@@ -245,7 +239,6 @@ if __name__ == "__main__":
     CLUSTER_PRED_THRESH = args.cluster_pred_thresh
     ASSAY_PRED_THRESH = args.assay_pred_thresh
     SIM_TO_TARGET_THRESH = args.sim_to_target_thresh
-    if FOCUS == "assay": USE_GNEPROP = False
     
     # Load runs from JSON config
     with open(f"../runs/{CONFIG_NAME}") as f:
@@ -272,6 +265,5 @@ if __name__ == "__main__":
 
     # Produce plots for the joint runs
     save_dir = f"{SAVEDIR}/aggr-{RUN_NAME}"
-    if USE_GNEPROP: save_dir += "-gneprop"
     if args.norm: save_dir += "-norm"
     go(joint_datum, NUM_RUNS, save_dir=save_dir, is_joint=True)

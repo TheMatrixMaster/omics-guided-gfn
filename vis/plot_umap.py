@@ -11,8 +11,8 @@ def load_puma():
     # Load models and ground truth data
     assay_dataset = load_assay_matrix_from_csv()
     cluster_labels = load_cluster_labels_from_csv()
-    assay_model = load_assay_pred_model(use_gneprop=USE_GNEPROP)
-    cluster_model = load_cluster_pred_model(use_gneprop=USE_GNEPROP)
+    assay_model = load_assay_pred_model()
+    cluster_model = load_cluster_pred_model()
     mmc_model = None
     return assay_dataset, cluster_labels, assay_model, cluster_model, mmc_model
 
@@ -102,7 +102,6 @@ if __name__ == "__main__":
 
     parser.add_argument("--norm", action="store_true", help="Normalize assay and cluster predictions")
     parser.add_argument("--plot_individual", action="store_true", help="Plot individual runs")
-    parser.add_argument("--use_gneprop", action="store_true", help="Use GNEPROP for assay preds")
     parser.add_argument("--target_mode", type=str, default="morph", help="Target mode to use")
     parser.add_argument("--config_name", type=str, default="cluster_morph.json", help="JSON config to use")
     parser.add_argument("--num_samples", type=int, default=None, help="Number of samples to use")
@@ -119,7 +118,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     RUN_NAME = args.run_name
     CONFIG_NAME = args.config_name
-    USE_GNEPROP = args.use_gneprop
     TARGET_MODE = args.target_mode
     NUM_SAMPLES = args.num_samples
     MAX_K = args.max_k
@@ -148,6 +146,5 @@ if __name__ == "__main__":
         NUM_RUNS += 1
         print(f"Finished loading data for target {target_idx}. Now plotting individual plots...")
         save_dir = f"{SAVEDIR}/{target_idx}-{RUN_NAME}"
-        if USE_GNEPROP: save_dir += "-gneprop"
         if args.norm: save_dir += "-norm"
         go(runs_datum, 1, target_fp=target_fp, target_rew=target_rew, save_dir=save_dir)
