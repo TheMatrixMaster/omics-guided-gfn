@@ -1,7 +1,7 @@
 # Omics-Guided GflowNets
 
 ## Description
-This repository contains the code to run the experiments and visualize the results in the [Cell Morphology-Guided Small Molecule Generation with GFlowNets]() paper. Our codebase builds on top of a fork of the public [Recursion gflownet](https://github.com/recursionpharma/gflownet) repo which provides the environment setup to run the GFlowNets framework on graph domains. We also use a second submodule for training multimodal contrastive learning models (GMC, CLIP) which we use to derive a reward signal for the GFlowNets. See the paper for more details. Please contact the [authors](mailto:stephen.lu@mila.quebec) for further information.
+This repository contains the code to run the experiments and visualize the results in the [Cell Morphology-Guided Small Molecule Generation with GFlowNets](https://arxiv.org/abs/2408.05196) paper. Our codebase builds on top of a fork of the public [Recursion gflownet](https://github.com/recursionpharma/gflownet) repo which provides the environment setup to run the GFlowNets framework on graph domains. We also use a second submodule for training multimodal contrastive learning models (GMC, CLIP) which we use to derive a reward signal for the GFlowNets. See the paper for more details. Please contact the [authors](mailto:stephen.lu@mila.quebec) for further information.
 
 ## Setup
 To setup the project, first create a conda environment with `python=3.10`
@@ -81,5 +81,13 @@ To reproduce plots from the paper, you will likely have to download all the runs
 ## Citation
 If you use this codebase in your research, please cite the following paper:
 ```
-@article{}
+@misc{lu2024cellmorphologyguidedsmallmolecule,
+      title={Cell Morphology-Guided Small Molecule Generation with GFlowNets}, 
+      author={Stephen Zhewen Lu and Ziqing Lu and Ehsan Hajiramezanali and Tommaso Biancalani and Yoshua Bengio and Gabriele Scalia and Michał Koziarski},
+      year={2024},
+      eprint={2408.05196},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG},
+      url={https://arxiv.org/abs/2408.05196}, 
+}
 ```
