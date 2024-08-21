@@ -4,7 +4,7 @@ import pandas as pd
 from tqdm import tqdm
 import hydra
 import torch
-import pickle
+import dill
 import sqlite3
 from collections import defaultdict
 
@@ -412,7 +412,9 @@ def num_modes_lazy(run_datum, rew_thresh=0.9, sim_thresh=0.7, bs=64, return_smis
 
 def load_target_from_path(target_path, mmc_model=None, target_mode="morph"):
     with open(target_path, "rb") as f:
-        target = pickle.load(f)
+        target = f.read()
+        target = dill.loads(target)
+        
     target_smi = target['inputs']['struct'].mols.decode('utf-8')
     fpgen = rdFingerprintGenerator.GetMorganGenerator(radius=2,fpSize=2048)
     target_fp = fpgen.GetFingerprint(Chem.MolFromSmiles(target_smi))
